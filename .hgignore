@@ -1,0 +1,23 @@
+
+syntax: glob
+
+.DS_Store
+
+# Files that can appear anywhere in the tree.
+*.pyc
+*.pyo
+*$py.class
+*.pyd
+*.so
+*.bak
+.coverage
+.coverage.*
+
+# Stuff in the root.
+build
+*.egg-info
+dist
+htmlcov
+MANIFEST
+setuptools-*.egg
+
