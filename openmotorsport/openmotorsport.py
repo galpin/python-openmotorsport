@@ -123,7 +123,6 @@ class Session(object):
   def _write_meta(self):
     '''Generate the meta.xml file and return the contents as a string.'''
     root = ET.Element('openmotorsport')
-    root.attrib['version'] = OM_VERSION
     root.attrib['xmlns'] = BASE_NS
     
     # metadata
@@ -506,9 +505,6 @@ def ns(string):
 
 BASE_NS = 'http://66laps.org/ns/openmotorsport-1.0'
 '''The default namespace of an OpenMotorsport document.'''
-
-OM_VERSION = '1.0'
-'''The current OpenMotorsport version.'''
 
 SINGLE_PRECISION_BYTES = 4
 '''Single precision floating point (32-bit, 4-bytes).'''
