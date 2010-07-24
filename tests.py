@@ -17,10 +17,9 @@
 # limitations under the License.
 
 import unittest
-import cElementTree as ElementTree
 from datetime import datetime
 import os
-from array import array
+import numpy as np
 
 from openmotorsport.openmotorsport import Session, Channel, Group, Metadata
 from openmotorsport.utils import *
@@ -48,6 +47,7 @@ class SessionTests(unittest.TestCase):
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
+    for channel in imported_doc.channels: channel.data # lazy
     self.assertEquals(original_doc, imported_doc)
     os.remove(path)
     
@@ -75,7 +75,7 @@ class SessionTests(unittest.TestCase):
       interval='1', data=self._getSampleData()))
     original_doc.channels.append(Channel(id=1, name='Channel 2',
       interval='1', data=self._getSampleData()))         
-    original_doc.markers.extend([1.0, 2.0, 3.0])   
+    original_doc.add_markers([1.0, 2.0, 3.0])
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
@@ -91,7 +91,7 @@ class SessionTests(unittest.TestCase):
       interval='1', data=self._getSampleData()))
     original_doc.channels.append(Channel(id=1, name='Channel 2',
       interval='1', data=self._getSampleData()))         
-    original_doc.markers.extend([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])   
+    original_doc.add_markers([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
     original_doc.num_sectors = 2
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
@@ -121,9 +121,8 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(len(doc.channels[0].data), 0)
     
     for x in range(0, 2):
-      doc.channels[x].data = array('f')
       for y in range(0, 1000):
-        doc.channels[x].data.append(float(y))
+        doc.channels[x].append(float(y))
     
     self.assertEquals(len(doc.channels[0].data), 1000)
     self.assertEquals(len(doc.channels[1].data), 1000)
@@ -227,7 +226,7 @@ class SessionTests(unittest.TestCase):
     )
   
   def _getSampleData(self):
-    return array('f', [x * 0.1 for x in range(0, 10)])      
+    return np.array([x * 0.1 for x in range(0, 10)], dtype=np.float32)      
   
   def _getSampleDate(self):
     # contruct a datetime object with no microseconds as these are lost when
