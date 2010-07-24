@@ -188,7 +188,6 @@ class Session(object):
       node = ET.SubElement(markers, 'marker')
       node.attrib["time"] = '%.2f' % float(marker)
         
-    #print ET.tostring(root, encoding='UTF-8')        
     return ET.tostring(root, encoding='UTF-8')
 
   def _load(self, filepath):
@@ -281,17 +280,19 @@ class Session(object):
   
   def _parse_markers(self, root):
     '''Parses meta.xml/markers from a given ElementTree root.'''
-    markers = root.find(ns('markers'))
-    if not markers:
+    node = root.find(ns('markers'))
+    if not node:
       return
     
-    if markers.get('sectors'):
-      self.num_sectors = int(markers.get('sectors'))
+    self.num_sectors = int(node.get('sectors')) if node.get('sectors') else 0
     
-    markers = markers.findall(ns('marker'))
+    markers = node.findall(ns('marker'))
     
-    for marker in markers:
-      self.markers = np.append(self.markers, float(marker.get('time')))
+    self.add_markers(map(lambda x: float(x.get('time')), markers))
+    
+  def add_markers(self, markers):
+    '''Adds a list of markers to the current session.'''
+    self.markers = np.append(self.markers, markers)
         
   def refresh_laps(self): 
     '''Calculates laps based on the sessions markers and number of sectors.
@@ -381,6 +382,12 @@ class Channel(object):
     self.__parent__ = None
     
     self.__dict__.update(**kwargs)
+    
+  def append(self, value, time=None):
+    '''A convienience method to append a data sample and optional time.'''
+    self._data = np.append(self._data, value)
+    if time:
+      self._time = np.append(self._times, time)
 
   def _lazy_load(self):
     if self.__parent__ and not len(self._data):
