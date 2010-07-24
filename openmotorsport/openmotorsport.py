@@ -84,12 +84,14 @@ class Session(object):
     self.markers = np.append(self.markers, marker)
     
   def get_channel(self, name, group=None):
+    '''Gets a list of channels that match a given name and group.'''
     if not group:
       return [c for c in self.channels if c.name == name]
     else:
       return [c for c in self.channels if c.name == name and c.group == group]
       
   def get_group(self, group):
+    '''Gets a list of channels in a given group.'''
     return [c for c in self.channels if c.group == group]
     
   def _getlaps(self):
