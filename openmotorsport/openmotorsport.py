@@ -295,7 +295,8 @@ class Session(object):
     
     markers = node.findall(ns('marker'))
     
-    self.add_markers(map(lambda x: float(x.get('time')), markers))
+    self.add_markers((float(x.get('time')) for x in markers))
+    
         
   def refresh_laps(self): 
     '''Calculates laps based on the sessions markers and number of sectors.
