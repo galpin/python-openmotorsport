@@ -20,7 +20,7 @@
 
 __author__  = 'Martin Galpin'
 __contact__ = 'm@66laps.com'
-__version__ = '1.0'
+__version__ = '1.0b'
 __license__ = 'Apache License, Version 2.0'
 
 import datetime
