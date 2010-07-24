@@ -74,7 +74,14 @@ class Session(object):
   def close(self):
     '''Close any open resources.'''
     self._zipfile.close()
-  
+    
+  def add_markers(self, markers):
+    '''Adds a list of markers to the current session.'''
+    self.markers = np.append(self.markers, markers)
+
+  def add_marker(self, marker):
+    '''Adds a markers to the current session.'''
+    self.markers = np.append(self.markers, marker)  
   
   def _getlaps(self):
     '''Lazy initialized getter for laps (laps are calculated from markers).'''
@@ -289,10 +296,6 @@ class Session(object):
     markers = node.findall(ns('marker'))
     
     self.add_markers(map(lambda x: float(x.get('time')), markers))
-    
-  def add_markers(self, markers):
-    '''Adds a list of markers to the current session.'''
-    self.markers = np.append(self.markers, markers)
         
   def refresh_laps(self): 
     '''Calculates laps based on the sessions markers and number of sectors.
@@ -340,7 +343,7 @@ class Lap(object):
       self.sectors == other.sectors
   
   def __str__(self):
-    return '%s' % lap.time
+    return '%s (%s)' % (self.time, self.sectors)
       
 class Group(object):
   '''This class represents a collection of openmotorsport.Channel objects.'''
