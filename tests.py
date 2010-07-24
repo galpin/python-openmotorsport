@@ -21,7 +21,7 @@ from datetime import datetime
 import os
 import numpy as np
 
-from openmotorsport.openmotorsport import Session, Channel, Group, Metadata
+from openmotorsport.openmotorsport import Session, Channel, Metadata
 from openmotorsport.utils import *
 
 class SessionTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class SessionTests(unittest.TestCase):
     original_doc.metadata = self._getSampleMeta()
     original_doc.write(path)        
     self.assertTrue(os.path.exists(path))            
-    imported_doc = Session(path)    
+    imported_doc = Session(path)
     self.assertEquals(imported_doc, original_doc)    
     os.remove(path)
     
@@ -135,25 +135,22 @@ class SessionTests(unittest.TestCase):
     # no group
     original_doc.channels.append(Channel(id=0, name='Channel 1',
       interval='1', data=self._getSampleData()))      
-      
-    group = Group(
-      name='Channel Group', 
-      channels=[
-        Channel(
-          id=1, 
-          name='Channel 2', 
-          interval='1', # TODO as ints
-          data=self._getSampleData()
-        ),
-        Channel(
-          id=2, 
-          name='Channel 3', 
-          interval='1', 
-          data=self._getSampleData()
-        )
-      ]
+    original_doc.channels.extend([
+      Channel(
+        id=1, 
+        name='Channel 2', 
+        interval='1', # TODO as ints
+        data=self._getSampleData(),
+        group='Group 2'
+      ),
+      Channel(
+        id=2, 
+        name='Channel 3', 
+        interval='1', 
+        data=self._getSampleData(),
+        group='Group 1'
+      )]
     )
-    original_doc.channels.append(group)
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
@@ -206,6 +203,25 @@ class SessionTests(unittest.TestCase):
     doc = Session()
     doc.markers = [10.0, 20.0, 30.0]
     self.assertEquals(len(doc.laps), 3)
+    
+  def testGetChannelOrGroup(self):
+    c1 = Channel(name='Channel 1')
+    c2 = Channel(name='Channel 2')
+    c3 = Channel(name='Channel 3', group='Group 1')
+    c4 = Channel(name='Channel 4', group='Group 2')
+    c5 = Channel(name='Channel 5', group='Group 1')
+    c6 = Channel(name='Channel 5')
+
+    doc = Session()
+    doc.channels = [c1,c2,c3,c4,c5,c6]
+
+    self.assertEquals(doc.get_channel('Channel 1'), [c1])
+    self.assertEquals(doc.get_channel('Channel 2'), [c2])
+    self.assertEquals(doc.get_channel('Channel 3'), [c3])
+    self.assertEquals(doc.get_channel('Channel 4'), [c4])
+    self.assertEquals(doc.get_channel('Channel 5'), [c5, c6])    
+    self.assertEquals(doc.get_group('Group 1'), [c3, c5])    
+    self.assertEquals(doc.get_channel('Channel 5', group='Group 1'), [c5])    
         
   # /----------------------------------------------------------------------/    
   
@@ -317,7 +333,7 @@ class UtilsTests(unittest.TestCase):
     doc = Session()
     doc.num_sectors = 2
     doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(doc, 2), 20.0) 
+    self.assertEquals(fastest_sector(doc, 2), 20.0)   
     
 if __name__ == '__main__':
   unittest.main()

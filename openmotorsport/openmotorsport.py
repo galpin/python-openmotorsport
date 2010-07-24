@@ -81,8 +81,17 @@ class Session(object):
 
   def add_marker(self, marker):
     '''Adds a markers to the current session.'''
-    self.markers = np.append(self.markers, marker)  
-  
+    self.markers = np.append(self.markers, marker)
+    
+  def get_channel(self, name, group=None):
+    if not group:
+      return [c for c in self.channels if c.name == name]
+    else:
+      return [c for c in self.channels if c.name == name and c.group == group]
+      
+  def get_group(self, group):
+    return [c for c in self.channels if c.group == group]
+    
   def _getlaps(self):
     '''Lazy initialized getter for laps (laps are calculated from markers).'''
     if not self._laps:
@@ -109,20 +118,10 @@ class Session(object):
         if channel.times and len(channel.times) > 0:
           zipfile.writestr('data/%s_times.bin' % channel.id, 
               channel.times.tostring())
-              
-    def write_group(group):
-      for channel in group.channels:
-        write_channel(channel)
     
     self._zipfile = zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED)
-    self._zipfile.writestr('meta.xml', self._write_meta()) 
-       
-    for obj in self.channels:
-      if isinstance(obj, Group):
-        write_group(obj)
-      else:
-        write_channel(obj)      
-      
+    self._zipfile.writestr('meta.xml', self._write_meta())            
+    [write_channel(c) for c in self.channels]      
     self._zipfile.close()
     
   def _write_meta(self):
@@ -160,8 +159,17 @@ class Session(object):
       ET.SubElement(meta, 'datasource').text = self.metadata.datasource
     
     # channels and groups
-    def write_channel(root, channel):
+    def write_channel(root, groups, channel):
+      # channel parent node
+      if channel.group:
+        if channel.group in groups:
+          root = groups[channel.group]
+        else:
+          root = ET.SubElement(root, 'group')
+          ET.SubElement(root, 'name').text = channel.group
+
       node = ET.SubElement(root, 'channel')
+        
       node.attrib['id'] = str(channel.id)
       
       if channel.interval:
@@ -173,18 +181,10 @@ class Session(object):
       if channel.description:
         ET.SubElement(node, 'description').text = channel.description
         
-    def write_group(root, group):
-      node = ET.SubElement(root, 'group')
-      ET.SubElement(node, 'name').text = group.name
-      for channel in group.channels:
-        write_channel(node, channel)
-        
     channels = ET.SubElement(root, 'channels')
+    groups = {}
     for obj in self.channels:
-      if isinstance(obj, Group):
-        write_group(channels, obj)
-      else:
-        write_channel(channels, obj)
+      write_channel(channels, groups, obj)
     
     # markers
     markers = ET.SubElement(root, 'markers')
@@ -195,6 +195,9 @@ class Session(object):
       node = ET.SubElement(markers, 'marker')
       node.attrib["time"] = '%.2f' % float(marker)
         
+    #print ET.tostring(root, encoding='UTF-8')
+    #print
+    #print
     return ET.tostring(root, encoding='UTF-8')
 
   def _load(self, filepath):
@@ -261,29 +264,27 @@ class Session(object):
     # read datasource
     self.metadata.datasource = node.findtext(ns('datasource'))    
     
-  def _parse_channels(self, root):
+  def _parse_channels(self, root, group=None):
     '''Parses meta.xml/channels (and groups) from a given ElementTree root.'''
-    def parse_channel(node):
+    def parse_channel(node, group=None):
       return Channel(
         id = node.get('id'),
         name = node.findtext(ns('name')),
         interval = node.get('interval'),
         units = node.get('units'),
         description = node.findtext(ns('description')),
+        group = group,
         __parent__ = self # a reference to this session for lazy loading
       )
       
-    def parse_group(node):
-      group = Group(name = node.findtext(ns('name')))
-      for channel in node.findall(ns('channel')):
-        group.channels.append(parse_channel(channel))
-      return group
+    def parse_channels(root, group=None):
+      for node in root.getchildren():
+        if node.tag == ns('channel'):
+          self.channels.append(parse_channel(node, group))
+        elif node.tag == ns('group'):
+          parse_channels(node, node.findtext(ns('name')))
       
-    for node in root.find(ns('channels')).getchildren():
-      if node.tag == ns('channel'):
-        self.channels.append(parse_channel(node))
-      elif node.tag == ns('group'):
-        self.channels.append(parse_group(node))
+    parse_channels(root.find(ns('channels')))
   
   def _parse_markers(self, root):
     '''Parses meta.xml/markers from a given ElementTree root.'''
@@ -346,22 +347,6 @@ class Lap(object):
   def __str__(self):
     return '%s (%s)' % (self.time, self.sectors)
       
-class Group(object):
-  '''This class represents a collection of openmotorsport.Channel objects.'''
-  def __init__(self, **kwargs):
-    self.name = None
-    '''The name of this channel group.'''
-    self.channels = []
-    
-    '''A list of openmotorsport.Channel objects for this group.'''
-    self.__dict__.update(**kwargs)
-    
-  def __eq__(self, other):
-    return other and self.__dict__ == other.__dict__
-
-  def __str__(self):
-    return self.name    
-            
 class Channel(object):
   '''This class represents a single channel within an OpenMotorsport file.'''
   def __init__(self, **kwargs):
@@ -370,6 +355,9 @@ class Channel(object):
     
     self.name = None
     '''The channel name.'''
+    
+    self.group = None
+    '''The channel group name.'''
     
     self.interval = None
     '''The sample interval for this channel. If not specified (None) then the
@@ -418,10 +406,13 @@ class Channel(object):
   '''An array of times for each data sample.'''
 
   def __eq__(self, other):
-    return other and self.name == other.name
+    return other and \
+          self.name == other.name and \
+          self.group == other.group and \
+          self.interval == other.interval
 
-  def __str__(self):
-    return self.name
+  def __repr__(self):
+    return '%s (%s)' % (self.name, self.group)
 
 
 class Metadata(object):
