@@ -26,11 +26,10 @@ __license__ = 'Apache License, Version 2.0'
 import datetime
 import os
 import tempfile
-import email.utils
-import xml.etree.ElementTree as ET
 import zipfile
-import array
 import itertools
+import xml.etree.ElementTree as ET
+import numpy as np
 
 class Session(object):
   '''An instance of openmotorsport.Session represents a OpenMotorsport file.'''
@@ -50,7 +49,7 @@ class Session(object):
     self.channels = []
     '''A list of openmotorsport.Channel instance for this session.'''
     
-    self.markers = array.array('f')
+    self.markers = np.array([], dtype=np.float32)
     '''A list of time offset markers for this session.'''
     
     self.num_sectors = 0
@@ -211,19 +210,16 @@ class Session(object):
   def _read_channel(self, channel):                    
     '''Read the binary data (and times, if necessary) for a given a channel.'''
     def read_binary(path):
-      with open(path, 'r') as f:
-        a = array.array('f')
-        a.fromfile(f, os.path.getsize(path) / SINGLE_PRECISION_BYTES)
-        return a
+      return 
         
     try:
       p = 'data/%s.bin' % channel.id
-      channel.data = read_binary(self._zipfile.extract(p, self._tempdir))
+      channel.data = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
 
       if not channel.interval:
         # variable frequency, we need to read the acompanying times
         p = 'data/%s_times.bin' % channel.id
-        channel.times = read_binary(self._zipfile.extract(p, self._tempdir))
+        channel.times = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
     except KeyError:
       raise ImportError('Cannot find data file for %s (id = %s)' 
         % (channel.name, channel.id))      
@@ -233,8 +229,7 @@ class Session(object):
     
     def read(root, path, dict, key):
       dict[key] = root.findtext('%s/%s' % (ns(path), ns(key)))
-    
-    
+        
     node = root.find(ns('metadata'))
                 
     # read user
@@ -295,10 +290,9 @@ class Session(object):
     
     markers = markers.findall(ns('marker'))
     
-    # TODO optimize
     for marker in markers:
-      self.markers.append(float(marker.get('time')))
-  
+      self.markers = np.append(self.markers, float(marker.get('time')))
+        
   def refresh_laps(self): 
     '''Calculates laps based on the sessions markers and number of sectors.
     
@@ -322,8 +316,8 @@ class Session(object):
     return other and \
             self.metadata == other.metadata and \
             self.channels == other.channels and \
-            self.markers == other.markers and \
-            self.num_sectors == other.num_sectors
+            self.num_sectors == other.num_sectors and \
+            np.equal(self.markers.all(), other.markers.all())
   
   def __str__(self):
     return self.metadata
@@ -382,14 +376,14 @@ class Channel(object):
     self.description = None
     '''A textual description of this channel.'''
     
-    self._data = array.array('f')
-    self._times = array.array('f')
+    self._data = np.array((), dtype=np.float32)
+    self._times = np.array((), dtype=np.float32)
     self.__parent__ = None
     
     self.__dict__.update(**kwargs)
 
   def _lazy_load(self):
-    if self.__parent__ and not self._data:
+    if self.__parent__ and not len(self._data):
       self.__parent__._read_channel(self)
       
   def _getdata(self):
@@ -505,6 +499,3 @@ def ns(string):
 
 BASE_NS = 'http://66laps.org/ns/openmotorsport-1.0'
 '''The default namespace of an OpenMotorsport document.'''
-
-SINGLE_PRECISION_BYTES = 4
-'''Single precision floating point (32-bit, 4-bytes).'''
