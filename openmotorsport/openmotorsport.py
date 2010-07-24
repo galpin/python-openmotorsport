@@ -70,12 +70,11 @@ class Session(object):
   def __exit__(self, type, value, traceback):
     '''Context manager protocol. Automatically closes resources.'''
     self.close()
-    return false
+    return False
     
-  def close():
+  def close(self):
     '''Close any open resources.'''
     self._zipfile.close()
-    os.unlink(self._tempdir)
   
   
   def _getlaps(self):
@@ -296,6 +295,7 @@ class Session(object):
     
     markers = markers.findall(ns('marker'))
     
+    # TODO optimize
     for marker in markers:
       self.markers.append(float(marker.get('time')))
   
