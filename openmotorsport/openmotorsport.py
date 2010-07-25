@@ -328,6 +328,9 @@ class Session(object):
         sectors = [make_relative(s, self._laps) if s else None for s in g[:-1]],
         time = make_relative(g[-1], self._laps) if g[-1] else None
       ))    
+      
+  def __repr__(self):
+    return self.metadata      
         
   def __eq__(self, other):
     return other and \
@@ -335,9 +338,6 @@ class Session(object):
             self.channels == other.channels and \
             self.num_sectors == other.num_sectors and \
             np.equal(self.markers.all(), other.markers.all())
-  
-  def __str__(self):
-    return self.metadata
 
 class Lap(object):
   '''This class represents a single lap with a time and list of sectors.'''
@@ -354,6 +354,9 @@ class Lap(object):
   def sectors(self):
     '''Gets a list of sector times (in seconds).'''
     return self._sectors
+    
+  def __repr__(self):
+    return '%.3f (%s)' % (self._time, self._sectors)
   
   def __eq__(self, other):
     return other and \
@@ -462,6 +465,9 @@ class Channel(object):
   
   times = property(_gettimes, _settimes)
   '''An array of times for each data sample.'''
+  
+  def __repr__(self):
+    return '%s (%s) [%s]' % (self.name, self.group, self.interval)
 
   def __eq__(self, other):
     return other and \
@@ -469,9 +475,6 @@ class Channel(object):
           self.group == other.group and \
           self.interval == other.interval and \
           len(self.data) == len(other.data)
-
-  def __repr__(self):
-    return '%s (%s) [%s]' % (self.name, self.group, self.interval)
 
 
 class Metadata(object):
@@ -523,6 +526,9 @@ class Metadata(object):
     
     self.__dict__.update(**kwargs)
     
+  def __repr__(self):
+    return '%s at %s (%s)' % (self.user, self.venue['name'], self.date)
+      
   def __eq__(self, other):
     return other and \
       self.user == other.user and \
