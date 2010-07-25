@@ -46,7 +46,9 @@ class Session(object):
     self.metadata = Metadata()
     '''An instance of openmotorsport.Metadata for this session.'''
     
-    self.channels = []
+    self._channels = {}
+    self._groups = {}
+    
     '''A list of openmotorsport.Channel instance for this session.'''
     
     self.markers = np.array([], dtype=np.float32)
@@ -61,6 +63,11 @@ class Session(object):
       self._load(filepath)
       
     self.__dict__.update(**kwargs)
+    
+  @property
+  def channels(self):
+    '''Gets a list of Channel instances for this session.'''
+    return self._channels.values()
     
   def __enter__(self):
     '''Context manager protocol. Returns self.'''
@@ -83,17 +90,27 @@ class Session(object):
     '''Adds a markers to the current session.'''
     self.markers = np.append(self.markers, marker)
     
+  def add_channel(self, channel):
+    '''Adds a given instance of Channel to this session.'''
+    self._channels['%s/%s' % (channel.name, channel.group)] = channel
+    if not channel.group in self._groups:
+      self._groups[channel.group] = []
+    self._groups[channel.group].append(channel)
+    
   def get_channel(self, name, group=None):
     '''Gets a list of channels that match a given name and group.'''
-    if not group:
-      return [c for c in self.channels if c.name == name]
-    else:
-      return [c for c in self.channels if c.name == name and c.group == group]
+    try:
+      return self._channels['%s/%s' % (name, group)]
+    except KeyError:
+      return None
       
   def get_group(self, group):
     '''Gets a list of channels in a given group.'''
-    return [c for c in self.channels if c.group == group]
-    
+    try:
+      return self._groups[group]
+    except KeyError:
+      return None
+          
   def _getlaps(self):
     '''Lazy initialized getter for laps (laps are calculated from markers).'''
     if not self._laps:
@@ -260,20 +277,21 @@ class Session(object):
   def _parse_channels(self, root, group=None):
     '''Parses meta.xml/channels (and groups) from a given ElementTree root.'''
     def parse_channel(node, group=None):
-      return Channel(
+      channel = Channel(
         id = node.get('id'),
         name = node.findtext(ns('name')),
         interval = node.get('interval'),
         units = node.get('units'),
         description = node.findtext(ns('description')),
-        group = group,
-        __parent__ = self # a reference to this session for lazy loading
+        group = group
       )
+      channel.__parent__ = self # a reference to this session for lazy loading
+      return channel
       
     def parse_channels(root, group=None):
       for node in root.getchildren():
         if node.tag == ns('channel'):
-          self.channels.append(parse_channel(node, group))
+          self.add_channel(parse_channel(node, group))
         elif node.tag == ns('group'):
           parse_channels(node, node.findtext(ns('name')))
       
@@ -323,29 +341,36 @@ class Session(object):
 
 class Lap(object):
   '''This class represents a single lap with a time and list of sectors.'''
-  def __init__(self, **kwargs):
-    self.time = None
-    '''The lap time (in seconds) of this lap.'''
+  def __init__(self, time=None, sectors=[]):
+    self._time = time
+    self._sectors = sectors
     
-    self.sectors = []
-    '''A list of sector times (in seconds)'''
-    
-    self.__dict__.update(**kwargs)
+  @property
+  def time(self):
+    '''Gets the lap time (in seconds) of this lap.'''
+    return self._time
+  
+  @property
+  def sectors(self):
+    '''Gets a list of sector times (in seconds).'''
+    return self._sectors
   
   def __eq__(self, other):
     return other and \
       self.time == other.time and \
       self.sectors == other.sectors
-  
-  def __str__(self):
-    return '%s (%s)' % (self.time, self.sectors)
       
 class Channel(object):
   '''This class represents a single channel within an OpenMotorsport file.'''
-  def __init__(self, 
+  def __init__(self,
+              id=None,
+              name=None,              
+              group=None,
+              units=None,
+              interval=None,
+              description=None,
               data=np.array([], dtype=np.float32), 
-              times=np.array([], dtype=np.float32), 
-              **kwargs):
+              times=np.array([], dtype=np.float32)):
     '''Contructs a new instance of Channel.
     
     Arguments:
@@ -355,30 +380,58 @@ class Channel(object):
         An initial numpy times array.
     '''
     
-    self.id = None
+    self._id = id
     '''The unique identifier for this channel.'''
     
-    self.name = None
+    self._name = name
     '''The channel name.'''
     
-    self.group = None
+    self._group = group
     '''The channel group name.'''
     
-    self.interval = None
+    self._interval = interval
     '''The sample interval for this channel. If not specified (None) then the
     time of each sample will be provided in Channel.times.'''
     
-    self.units = None
+    self._units = units
     '''The abbreviated units of measurement for this channel.'''
     
-    self.description = None
+    self._description = description
     '''A textual description of this channel.'''
     
     self._data = data
     self._times = times
     self.__parent__ = None
+        
+  @property 
+  def name(self):
+    '''Gets the channel name [read-only].'''
+    return self._name
+  
+  @property
+  def id(self):
+    '''Gets the channel id [read-only].'''
+    return self._id
+  
+  @property
+  def group(self):
+    '''Gets the channel group [read-only].'''
+    return self._group
+  
+  @property
+  def interval(self):
+    '''Gets the channel interval [read-only].'''
+    return self._interval
+  
+  @property
+  def units(self):
+    '''Gets the channel units [read-only].'''
+    return self._units
     
-    self.__dict__.update(**kwargs)
+  @property
+  def description(self):
+    '''Gets the channel description [read-only].'''
+    return self._description
     
   def append(self, value, time=None):
     '''A convienience method to append a data sample and optional time.'''

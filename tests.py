@@ -40,9 +40,9 @@ class SessionTests(unittest.TestCase):
     path = 'test_data.om'
     original_doc = Session()
     original_doc.metadata = self._getSampleMeta()    
-    original_doc.channels.append(Channel(id=0, name='Channel 1',
+    original_doc.add_channel(Channel(id=0, name='Channel 1',
       interval='1', data=self._getSampleData()))      
-    original_doc.channels.append(Channel(id=1, name='Channel 2',
+    original_doc.add_channel(Channel(id=1, name='Channel 2',
       interval='1', data=self._getSampleData()))            
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
@@ -56,9 +56,9 @@ class SessionTests(unittest.TestCase):
     path = 'test_variable.om'
     original_doc = Session()
     original_doc.metadata = self._getSampleMeta()    
-    original_doc.channels.append(Channel(id=0, name='Channel 1',
+    original_doc.add_channel(Channel(id=0, name='Channel 1',
      data=self._getSampleData(), times=self._getSampleData()))
-    original_doc.channels.append(Channel(id=1, name='Channel 2',
+    original_doc.add_channel(Channel(id=1, name='Channel 2',
       interval='10', data=self._getSampleData()))            
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
@@ -71,9 +71,9 @@ class SessionTests(unittest.TestCase):
     path = 'test_markers.om'
     original_doc = Session()
     original_doc.metadata = self._getSampleMeta()    
-    original_doc.channels.append(Channel(id=0, name='Channel 1',
+    original_doc.add_channel(Channel(id=0, name='Channel 1',
       interval='1', data=self._getSampleData()))
-    original_doc.channels.append(Channel(id=1, name='Channel 2',
+    original_doc.add_channel(Channel(id=1, name='Channel 2',
       interval='1', data=self._getSampleData()))         
     original_doc.add_markers([1.0, 2.0, 3.0])
     original_doc.write(path)
@@ -87,9 +87,9 @@ class SessionTests(unittest.TestCase):
     path = 'test_markers.om'
     original_doc = Session()
     original_doc.metadata = self._getSampleMeta()    
-    original_doc.channels.append(Channel(id=0, name='Channel 1',
+    original_doc.add_channel(Channel(id=0, name='Channel 1',
       interval='1', data=self._getSampleData()))
-    original_doc.channels.append(Channel(id=1, name='Channel 2',
+    original_doc.add_channel(Channel(id=1, name='Channel 2',
       interval='1', data=self._getSampleData()))         
     original_doc.add_markers([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
     original_doc.num_sectors = 2
@@ -116,9 +116,9 @@ class SessionTests(unittest.TestCase):
     
     doc = Session()
     doc.metadata = self._getSampleMeta()    
-    doc.channels.append(Channel(id=0, name='Channel 1',
+    doc.add_channel(Channel(id=0, name='Channel 1',
       interval='1'))
-    doc.channels.append(Channel(id=1, name='Channel 2',
+    doc.add_channel(Channel(id=1, name='Channel 2',
         interval='1'))      
         
     self.assertEquals(len(doc.channels[0].data), 0)
@@ -142,7 +142,7 @@ class SessionTests(unittest.TestCase):
     original_doc.metadata = self._getSampleMeta()    
     
     # no group
-    original_doc.channels.append(Channel(id=0, name='Channel 1',
+    original_doc.add_channel(Channel(id=0, name='Channel 1',
       interval='1', data=self._getSampleData()))      
     original_doc.channels.extend([
       Channel(
@@ -214,23 +214,26 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(len(doc.laps), 3)
     
   def testGetChannelOrGroup(self):
-    c1 = Channel(name='Channel 1')
-    c2 = Channel(name='Channel 2')
-    c3 = Channel(name='Channel 3', group='Group 1')
-    c4 = Channel(name='Channel 4', group='Group 2')
-    c5 = Channel(name='Channel 5', group='Group 1')
-    c6 = Channel(name='Channel 5')
+    channels = [
+      Channel(name='Channel 1'),
+      Channel(name='Channel 2'),
+      Channel(name='Channel 3', group='Group 1'),
+      Channel(name='Channel 4', group='Group 2'),
+      Channel(name='Channel 5', group='Group 1'),
+      Channel(name='Channel 5')
+    ]
 
     doc = Session()
-    doc.channels = [c1,c2,c3,c4,c5,c6]
+    [doc.add_channel(c) for c in channels]
 
-    self.assertEquals(doc.get_channel('Channel 1'), [c1])
-    self.assertEquals(doc.get_channel('Channel 2'), [c2])
-    self.assertEquals(doc.get_channel('Channel 3'), [c3])
-    self.assertEquals(doc.get_channel('Channel 4'), [c4])
-    self.assertEquals(doc.get_channel('Channel 5'), [c5, c6])    
-    self.assertEquals(doc.get_group('Group 1'), [c3, c5])    
-    self.assertEquals(doc.get_channel('Channel 5', group='Group 1'), [c5])    
+    self.assertEquals(doc.get_channel('Channel 1'), channels[0])
+    self.assertEquals(doc.get_channel('Channel 2'), channels[1])
+    self.assertEquals(doc.get_channel('Channel 3'), None)
+    self.assertEquals(doc.get_channel('Channel 3', group='Group 1'), channels[2])
+    self.assertEquals(doc.get_channel('Channel 4', group='Group 2'), channels[3])
+    self.assertEquals(doc.get_channel('Channel 5', group='Group 1'), channels[4])    
+    self.assertEquals(doc.get_channel('Channel 5'), channels[5])
+    self.assertEquals(doc.get_group('Group 1'), [channels[2], channels[4]])
         
   # /----------------------------------------------------------------------/    
   
