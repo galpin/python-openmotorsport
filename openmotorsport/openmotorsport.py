@@ -105,26 +105,36 @@ class Session(object):
   calculated based on the number of the markers and sectors per lap.'''
         
   def write(self, filepath):
-    '''
-    Write this instance of Session to a OpenMotorsport file at a given filepath.
-    
-    Args:
-      filepath
-        The path to write to.
-    '''  
-    def write_channel(channel):
-      self._zipfile.writestr('data/%s.bin' % channel.id,
-              channel.data.tostring())
-      if not channel.interval:
-        # variable frequency, need to write times if we have any
-        if channel.times and len(channel.times) > 0:
-          zipfile.writestr('data/%s_times.bin' % channel.id, 
-              channel.times.tostring())
+    '''Write this instance to an OpenMotorsport file at the given filepath.'''
+    def write_binary(array, zipfile, arcname):
+      tup = tempfile.mkstemp()            
+      array.tofile(os.fdopen(tup[0], "wb"))        
+      zipfile.write(tup[1], arcname=arcname)
+      os.remove(tup[1])
     
     self._zipfile = zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED)
     self._zipfile.writestr('meta.xml', self._write_meta())            
-    [write_channel(c) for c in self.channels]      
+
+    for c in self.channels:
+      write_binary(c.data, self._zipfile, 'data/%s.bin' % c.id)
+      if not c.interval and c.times is not None:
+        write_binary(c.times, self._zipfile, 'data/%s.tms' % c.id)
+
     self._zipfile.close()
+    
+  def _read_channel(self, channel):                    
+    '''Read the binary data (and times, if necessary) for a given a channel.'''
+    try:
+      p = 'data/%s.bin' % channel.id
+      channel.data = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
+
+      if not channel.interval:
+        # variable frequency, we need to read the acompanying times
+        p = 'data/%s.tms' % channel.id
+        channel.times = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
+    except KeyError:
+      raise ImportError('Cannot find data file for %s (id = %s)' 
+        % (channel.name, channel.id))    
     
   def _write_meta(self):
     '''Generate the meta.xml file and return the contents as a string.'''
@@ -169,13 +179,14 @@ class Session(object):
         else:
           root = ET.SubElement(root, 'group')
           ET.SubElement(root, 'name').text = channel.group
+          groups[channel.group] = root
 
       node = ET.SubElement(root, 'channel')
         
       node.attrib['id'] = str(channel.id)
       
       if channel.interval:
-        node.attrib["interval"] = channel.interval
+        node.attrib["interval"] = str(channel.interval)
       if channel.units:
         node.attrib['units'] = channel.units
     
@@ -197,9 +208,6 @@ class Session(object):
       node = ET.SubElement(markers, 'marker')
       node.attrib["time"] = '%.2f' % float(marker)
         
-    #print ET.tostring(root, encoding='UTF-8')
-    #print
-    #print
     return ET.tostring(root, encoding='UTF-8')
 
   def _load(self, filepath):
@@ -216,24 +224,7 @@ class Session(object):
     except KeyError:
       raise Exception('meta.xml was not found.')
       
-    # the zipfile is left open (for lazy loading of data)          
-      
-  def _read_channel(self, channel):                    
-    '''Read the binary data (and times, if necessary) for a given a channel.'''
-    def read_binary(path):
-      return 
-        
-    try:
-      p = 'data/%s.bin' % channel.id
-      channel.data = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
-
-      if not channel.interval:
-        # variable frequency, we need to read the acompanying times
-        p = 'data/%s_times.bin' % channel.id
-        channel.times = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
-    except KeyError:
-      raise ImportError('Cannot find data file for %s (id = %s)' 
-        % (channel.name, channel.id))      
+    # the zipfile is left open (for lazy loading of data)             
 
   def _parse_meta(self, root):
     '''Parses meta.xml/metadata from a given ElementTree root node.'''
@@ -351,7 +342,19 @@ class Lap(object):
       
 class Channel(object):
   '''This class represents a single channel within an OpenMotorsport file.'''
-  def __init__(self, **kwargs):
+  def __init__(self, 
+              data=np.array([], dtype=np.float32), 
+              times=np.array([], dtype=np.float32), 
+              **kwargs):
+    '''Contructs a new instance of Channel.
+    
+    Arguments:
+      data
+        An initial numpy data array.
+      times
+        An initial numpy times array.
+    '''
+    
     self.id = None
     '''The unique identifier for this channel.'''
     
@@ -371,17 +374,17 @@ class Channel(object):
     self.description = None
     '''A textual description of this channel.'''
     
-    self._data = np.array((), dtype=np.float32)
-    self._times = np.array((), dtype=np.float32)
+    self._data = data
+    self._times = times
     self.__parent__ = None
     
     self.__dict__.update(**kwargs)
     
   def append(self, value, time=None):
     '''A convienience method to append a data sample and optional time.'''
-    self._data = np.append(self._data, value)
+    self._data = np.append(self._data, np.asanyarray([value], dtype=self._data.dtype))
     if time:
-      self._time = np.append(self._times, time)
+      self._times = np.append(self._time, np.asanyarray([value], dtype=self._times.dtype))   
 
   def _lazy_load(self):
     if self.__parent__ and not len(self._data):
@@ -411,10 +414,11 @@ class Channel(object):
     return other and \
           self.name == other.name and \
           self.group == other.group and \
-          self.interval == other.interval
+          self.interval == other.interval and \
+          len(self.data) == len(other.data)
 
   def __repr__(self):
-    return '%s (%s)' % (self.name, self.group)
+    return '%s (%s) [%s]' % (self.name, self.group, self.interval)
 
 
 class Metadata(object):

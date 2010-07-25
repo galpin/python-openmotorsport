@@ -59,12 +59,12 @@ class SessionTests(unittest.TestCase):
     original_doc.channels.append(Channel(id=0, name='Channel 1',
      data=self._getSampleData(), times=self._getSampleData()))
     original_doc.channels.append(Channel(id=1, name='Channel 2',
-      interval='1', data=self._getSampleData()))            
+      interval='10', data=self._getSampleData()))            
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
     self.assertEquals(original_doc, imported_doc)
-    os.remove(path)
+    #os.remove(path)
     
 
   def testWriteWithMarkers(self):
@@ -112,10 +112,13 @@ class SessionTests(unittest.TestCase):
   
       
   def testDataAppend(self):
+    path = 'test_data.om'
+    
     doc = Session()
+    doc.metadata = self._getSampleMeta()    
     doc.channels.append(Channel(id=0, name='Channel 1',
       interval='1'))
-    doc.channels.append(Channel(id=0, name='Channel 2',
+    doc.channels.append(Channel(id=1, name='Channel 2',
         interval='1'))      
         
     self.assertEquals(len(doc.channels[0].data), 0)
@@ -126,6 +129,12 @@ class SessionTests(unittest.TestCase):
     
     self.assertEquals(len(doc.channels[0].data), 1000)
     self.assertEquals(len(doc.channels[1].data), 1000)
+    
+    doc.write(path)
+    self.assertTrue(os.path.exists(path))        
+    imported_doc = Session(path)
+    self.assertEquals(doc, imported_doc)
+    #os.remove(path)
     
   def testChannelGroup(self):
     path = 'test_data.om'
