@@ -122,22 +122,28 @@ class Session(object):
   calculated based on the number of the markers and sectors per lap.'''
         
   def write(self, filepath):
-    '''Write this instance to an OpenMotorsport file at the given filepath.'''
+    '''Write this instance to an OpenMotorsport file and returns the filepath.'''
     def write_binary(array, zipfile, arcname):
       tup = tempfile.mkstemp()            
       array.tofile(os.fdopen(tup[0], "wb"))        
       zipfile.write(tup[1], arcname=arcname)
       os.remove(tup[1])
-    
-    self._zipfile = zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED)
-    self._zipfile.writestr('meta.xml', self._write_meta())            
+      
+    try:    
+      self._zipfile = zipfile.ZipFile(filepath, 'w', zipfile.ZIP_DEFLATED)
+      self._zipfile.writestr('meta.xml', self._write_meta())            
 
-    for c in self.channels:
-      write_binary(c.data, self._zipfile, 'data/%s.bin' % c.id)
-      if not c.interval and c.times is not None:
-        write_binary(c.times, self._zipfile, 'data/%s.tms' % c.id)
+      for c in self.channels:
+        write_binary(c.data, self._zipfile, 'data/%s.bin' % c.id)
+        if not c.interval and c.times is not None:
+          write_binary(c.times, self._zipfile, 'data/%s.tms' % c.id)
 
-    self._zipfile.close()
+      self._zipfile.close()
+      return filepath
+    except:
+      # delete a partial file on error
+      os.remove(filepath)
+      raise
     
   def _read_channel(self, channel):                    
     '''Read the binary data (and times, if necessary) for a given a channel.'''
