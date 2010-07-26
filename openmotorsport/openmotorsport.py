@@ -83,10 +83,6 @@ class Session(object):
     '''Close any open resources.'''
     self._zipfile.close()
     
-  def add_markers(self, markers):
-    '''Adds a list of markers to the current session.'''
-    self.markers = np.append(self.markers, markers)
-
   def add_marker(self, marker):
     '''Adds a markers to the current session.'''
     self.markers = np.append(self.markers, marker)
@@ -317,12 +313,9 @@ class Session(object):
     node = root.find(ns('markers'))
     if not node:
       return
-    
     self.num_sectors = int(node.get('sectors')) if node.get('sectors') else 0
-    
-    markers = node.findall(ns('marker'))
-    
-    self.add_markers((float(x.get('time')) for x in markers))
+    markers = node.findall(ns('marker'))    
+    [self.add_marker(float(x.get('time'))) for x in markers]
     
         
   def refresh_laps(self): 
