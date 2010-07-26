@@ -64,7 +64,7 @@ class SessionTests(unittest.TestCase):
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
     self.assertEquals(original_doc, imported_doc)
-    #os.remove(path)
+    os.remove(path)
     
 
   def testWriteWithMarkers(self):
@@ -106,7 +106,7 @@ class SessionTests(unittest.TestCase):
     try:
       original_doc.write(path)
     except Exception:
-      os.remove(path)  
+      pass
     else:
       self.fail('Expected exception.')
   
@@ -215,12 +215,12 @@ class SessionTests(unittest.TestCase):
     
   def testGetChannelOrGroup(self):
     channels = [
-      Channel(name='Channel 1'),
-      Channel(name='Channel 2'),
-      Channel(name='Channel 3', group='Group 1'),
-      Channel(name='Channel 4', group='Group 2'),
-      Channel(name='Channel 5', group='Group 1'),
-      Channel(name='Channel 5')
+      Channel(id=1, name='Channel 1'),
+      Channel(id=2, name='Channel 2'),
+      Channel(id=3, name='Channel 3', group='Group 1'),
+      Channel(id=4, name='Channel 4', group='Group 2'),
+      Channel(id=5, name='Channel 5', group='Group 1'),
+      Channel(id=6, name='Channel 5')
     ]
 
     doc = Session()

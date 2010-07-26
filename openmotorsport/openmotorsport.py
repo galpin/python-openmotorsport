@@ -48,6 +48,7 @@ class Session(object):
     
     self._channels = {}
     self._groups = {}
+    self._channels_ids = {}
     
     '''A list of openmotorsport.Channel instance for this session.'''
     
@@ -93,17 +94,25 @@ class Session(object):
   def add_channel(self, channel):
     '''Adds a given instance of Channel to this session.'''
     self._channels['%s/%s' % (channel.name, channel.group)] = channel
+    self._channels_ids[channel.id] = channel
     if not channel.group in self._groups:
       self._groups[channel.group] = []
     self._groups[channel.group].append(channel)
     
   def get_channel(self, name, group=None):
-    '''Gets a list of channels that match a given name and group.'''
+    '''Gets a channels that matches a given name and group.'''
     try:
       return self._channels['%s/%s' % (name, group)]
     except KeyError:
       return None
       
+  def get_channel_by_id(self, id):
+    '''Gets a channels that matches a given id.'''
+    try:
+      return self._channels_ids[str(id)]
+    except KeyError:
+      return None      
+
   def get_group(self, group):
     '''Gets a list of channels in a given group.'''
     try:
@@ -336,7 +345,7 @@ class Session(object):
       ))    
       
   def __repr__(self):
-    return self.metadata      
+    return '%s' % self.metadata  
         
   def __eq__(self, other):
     return other and \
@@ -372,7 +381,7 @@ class Lap(object):
 class Channel(object):
   '''This class represents a single channel within an OpenMotorsport file.'''
   def __init__(self,
-              id=None,
+              id,
               name=None,              
               group=None,
               units=None,
@@ -389,7 +398,7 @@ class Channel(object):
         An initial numpy times array.
     '''
     
-    self._id = id
+    self._id = int(id)
     '''The unique identifier for this channel.'''
     
     self._name = name
@@ -477,6 +486,7 @@ class Channel(object):
 
   def __eq__(self, other):
     return other and \
+          self.id == other.id and \
           self.name == other.name and \
           self.group == other.group and \
           self.interval == other.interval and \
