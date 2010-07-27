@@ -55,7 +55,7 @@ class Session(object):
     self.markers = np.array([], dtype=np.float32)
     '''A list of time offset markers for this session.'''
     
-    self.num_sectors = 0
+    self.num_sectors = None
     '''The number of sectors (recorded as markers) per lap.'''
     
     self._laps = []
@@ -229,7 +229,7 @@ class Session(object):
     
     # markers
     markers = ET.SubElement(root, 'markers')
-    if self.num_sectors:
+    if self.num_sectors is not None:
       markers.attrib["sectors"] = str(self.num_sectors)
       
     for marker in self.markers:
@@ -313,7 +313,7 @@ class Session(object):
     node = root.find(ns('markers'))
     if not node:
       return
-    self.num_sectors = int(node.get('sectors')) if node.get('sectors') else 0
+    self.num_sectors = int(node.get('sectors')) if node.get('sectors') else None
     markers = node.findall(ns('marker'))    
     [self.add_marker(float(x.get('time'))) for x in markers]
     
@@ -329,7 +329,11 @@ class Session(object):
 
     def grouper(iterable, n, fillvalue=None):
       return itertools.izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
-
+    
+    # when num_sectors is None we take that to mean there are no laps.
+    if self.num_sectors is None:
+      return
+      
     self._laps[:] = []
     for g in grouper(self.markers, self.num_sectors + 1):
       self._laps.append(Lap(

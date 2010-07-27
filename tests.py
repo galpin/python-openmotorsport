@@ -33,8 +33,31 @@ class SessionTests(unittest.TestCase):
     original_doc.write(path)        
     self.assertTrue(os.path.exists(path))            
     imported_doc = Session(path)
-    self.assertEquals(imported_doc, original_doc)    
+    self.assertEquals(imported_doc, original_doc)
     os.remove(path)
+    
+  def testMarkersNoSectors(self):
+    path = 'nosectors.om'
+    session = Session()
+    session.metadata = self._getSampleMeta()
+    self.assertEquals(session.laps, [])
+    session.add_marker(10)
+    session.add_marker(20)
+    self.assertEquals(session.laps, [])
+    session.write(path)
+    imported = Session(path)
+    self.assertEquals(imported, session)
+    self.assertEquals(imported.laps, [])  
+    os.remove(path)
+     
+  def testMarkersZeroSectors(self):
+    session = Session()
+    session.metadata = self._getSampleMeta()
+    self.assertEquals(session.laps, [])
+    session.num_sectors = 0
+    session.add_marker(10)
+    session.add_marker(20)
+    self.assertEquals(len(session.laps), 2)
     
   def testWriteWithData(self):
     path = 'test_data.om'
@@ -75,7 +98,7 @@ class SessionTests(unittest.TestCase):
       interval='1', data=self._getSampleData()))
     original_doc.add_channel(Channel(id=1, name='Channel 2',
       interval='1', data=self._getSampleData()))         
-    original_doc.add_markers([1.0, 2.0, 3.0])
+    [original_doc.add_marker(m) for m in [1.0, 2.0, 3.0]]
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
@@ -91,7 +114,7 @@ class SessionTests(unittest.TestCase):
       interval='1', data=self._getSampleData()))
     original_doc.add_channel(Channel(id=1, name='Channel 2',
       interval='1', data=self._getSampleData()))         
-    original_doc.add_markers([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+    [original_doc.add_marker(m) for m in [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]]
     original_doc.num_sectors = 2
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
@@ -169,7 +192,7 @@ class SessionTests(unittest.TestCase):
   def testLapTimesSectors(self):
     doc = Session()
     doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]
+    [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]]
     self.assertEquals(len(doc.laps), 2)
     self.assertEquals(doc.laps[0].time, 30.0)
     self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
@@ -178,14 +201,14 @@ class SessionTests(unittest.TestCase):
     
     doc = Session()
     doc.num_sectors = 0
-    doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]
+    [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]]
     self.assertEquals(len(doc.laps), 6)
     for lap in doc.laps:
       self.assertEquals(lap.sectors, [])
       
     doc = Session()
     doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0, 40.0]
+    [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 40.0]]
     self.assertEquals(len(doc.laps), 2)
     self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
     self.assertEquals(doc.laps[0].time, 30.0)
@@ -194,14 +217,14 @@ class SessionTests(unittest.TestCase):
     
     doc = Session()
     doc.num_sectors = 2
-    doc.markers = [10.0, 20.0]
+    [doc.add_marker(m) for m in [10.0, 20.0]]
     self.assertEquals(len(doc.laps), 1)
     self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
     self.assertEquals(doc.laps[0].time, None)
     
     doc = Session()
     doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0]
+    [doc.add_marker(m) for m in [10.0, 20.0, 30.0]]
     self.assertEquals(len(doc.laps), 1)
     self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
     self.assertEquals(doc.laps[0].time, 30.0)
@@ -210,7 +233,8 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(len(doc.laps), 0)  
     
     doc = Session()
-    doc.markers = [10.0, 20.0, 30.0]
+    [doc.add_marker(m) for m in [10.0, 20.0, 30.0]]
+    doc.num_sectors = 0
     self.assertEquals(len(doc.laps), 3)
     
   def testGetChannelOrGroup(self):
