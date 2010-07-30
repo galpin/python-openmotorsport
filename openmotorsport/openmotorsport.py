@@ -326,7 +326,11 @@ class Session(object):
     '''
     def make_relative(time, laps): 
       return time if not laps else time - sum([lap.time for lap in laps])
-
+    
+    def make_relative_sector(time, sectors):
+      return time if not sectors else time - sum(sectors)
+      
+      
     def grouper(iterable, n, fillvalue=None):
       return itertools.izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
     
@@ -336,8 +340,12 @@ class Session(object):
       
     self._laps[:] = []
     for g in grouper(self.markers, self.num_sectors + 1):
+      sectors = []
+      for s in g[:-1]:
+        sectors.append(make_relative_sector(make_relative(s, self._laps), sectors) if s else None)
+      
       self._laps.append(Lap(
-        sectors = [make_relative(s, self._laps) if s else None for s in g[:-1]],
+        sectors = sectors,
         time = make_relative(g[-1], self._laps) if g[-1] else None
       ))    
       

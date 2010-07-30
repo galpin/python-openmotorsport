@@ -195,9 +195,9 @@ class SessionTests(unittest.TestCase):
     [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]]
     self.assertEquals(len(doc.laps), 2)
     self.assertEquals(doc.laps[0].time, 30.0)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
+    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
     self.assertEquals(doc.laps[1].time, 40.0)
-    self.assertEquals(doc.laps[1].sectors, [20.0, 30.0])
+    self.assertEquals(doc.laps[1].sectors, [20.0, 10.0])
     
     doc = Session()
     doc.num_sectors = 0
@@ -210,7 +210,7 @@ class SessionTests(unittest.TestCase):
     doc.num_sectors = 2
     [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 40.0]]
     self.assertEquals(len(doc.laps), 2)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
+    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
     self.assertEquals(doc.laps[0].time, 30.0)
     self.assertEquals(doc.laps[1].sectors, [10.0, None])
     self.assertEquals(doc.laps[1].time, None)
@@ -219,14 +219,14 @@ class SessionTests(unittest.TestCase):
     doc.num_sectors = 2
     [doc.add_marker(m) for m in [10.0, 20.0]]
     self.assertEquals(len(doc.laps), 1)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
+    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
     self.assertEquals(doc.laps[0].time, None)
     
     doc = Session()
     doc.num_sectors = 2
     [doc.add_marker(m) for m in [10.0, 20.0, 30.0]]
     self.assertEquals(len(doc.laps), 1)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 20.0])
+    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
     self.assertEquals(doc.laps[0].time, 30.0)
     
     doc = Session()
@@ -338,7 +338,7 @@ class UtilsTests(unittest.TestCase):
     doc.num_sectors = 2
     doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
     self.assertEquals(fastest_sector(doc, 1), 5.0)
-    self.assertEquals(fastest_sector(doc, 2), 10.0)
+    self.assertEquals(fastest_sector(doc, 2), 5.0)
     
     # no markers at all
     doc = Session()
@@ -350,14 +350,14 @@ class UtilsTests(unittest.TestCase):
     doc = Session()
     doc.num_sectors = 2
     doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(doc, 2), 20.0)
+    self.assertEquals(fastest_sector(doc, 2), 10.0)
     
   def testIsFastestSector(self):
     doc = Session()
     doc.num_sectors = 2
     doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
     self.assertTrue(is_fastest_sector(doc, 1, 5.0))
-    self.assertTrue(is_fastest_sector(doc, 2, 10.0))   
+    self.assertTrue(is_fastest_sector(doc, 2, 5.0))   
     
     # no markers at all
     doc = Session()
@@ -369,7 +369,7 @@ class UtilsTests(unittest.TestCase):
     doc = Session()
     doc.num_sectors = 2
     doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(doc, 2), 20.0)   
+    self.assertEquals(fastest_sector(doc, 2), 10.0)   
     
 if __name__ == '__main__':
   unittest.main()
