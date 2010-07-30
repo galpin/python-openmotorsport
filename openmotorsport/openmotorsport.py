@@ -91,7 +91,7 @@ class Session(object):
   def add_channel(self, channel):
     '''Adds a given instance of Channel to this session.'''
     self._channels['%s/%s' % (channel.name, channel.group)] = channel
-    self._channels_ids[channel.id] = channel
+    self._channels_ids[str(channel.id)] = channel
     if not channel.group in self._groups:
       self._groups[channel.group] = []
     self._groups[channel.group].append(channel)
