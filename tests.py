@@ -296,6 +296,9 @@ class UtilsTests(unittest.TestCase):
     self.assertEquals(lap_difference(doc, doc.laps[0]), None)
     self.assertEquals(lap_difference(doc, doc.laps[1]), 10.0)
     self.assertEquals(lap_difference(doc, doc.laps[2]), -20.0)
+    self.assertEquals(lap_difference(doc, doc.laps[2]), doc.laps[2].difference)
+    self.assertEquals(lap_difference(doc, doc.laps[1]), doc.laps[1].difference)
+    self.assertEquals(lap_difference(doc, doc.laps[0]), doc.laps[0].difference)
     
   def testFastestLapTime(self):
     doc = Session()

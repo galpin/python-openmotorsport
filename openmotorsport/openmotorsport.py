@@ -30,6 +30,7 @@ import zipfile
 import itertools
 import xml.etree.ElementTree as ET
 import numpy as np
+import utils
 
 class Session(object):
   '''An instance of openmotorsport.Session represents a OpenMotorsport file.'''
@@ -344,10 +345,12 @@ class Session(object):
       for s in g[:-1]:
         sectors.append(make_relative_sector(make_relative(s, self._laps), sectors) if s else None)
       
-      self._laps.append(Lap(
+      lap = Lap(
         sectors = sectors,
         time = make_relative(g[-1], self._laps) if g[-1] else None
-      ))    
+      )
+      lap.__parent__ = self
+      self._laps.append(lap) 
       
   def __repr__(self):
     return '%s' % self.metadata  
@@ -364,6 +367,8 @@ class Lap(object):
   def __init__(self, time=None, sectors=[]):
     self._time = time
     self._sectors = sectors
+    self._difference = None
+    self.__parent__ = None
     
   @property
   def time(self):
@@ -374,6 +379,13 @@ class Lap(object):
   def sectors(self):
     '''Gets a list of sector times (in seconds).'''
     return self._sectors
+  
+  @property
+  def difference(self):
+    '''Gets the difference in time between this lap and its previous lap.'''
+    if not self._difference and self.__parent__ is not None:
+      self._difference = utils.lap_difference(self.__parent__, self)
+    return self._difference
     
   def __repr__(self):
     return '%.3f (%s)' % (self._time, self._sectors)
