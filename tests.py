@@ -190,52 +190,71 @@ class SessionTests(unittest.TestCase):
     os.remove(path)
     
   def testLapTimesSectors(self):
-    doc = Session()
-    doc.num_sectors = 2
-    [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]]
-    self.assertEquals(len(doc.laps), 2)
-    self.assertEquals(doc.laps[0].time, 30.0)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(doc.laps[1].time, 40.0)
-    self.assertEquals(doc.laps[1].sectors, [20.0, 10.0])
-    
-    doc = Session()
-    doc.num_sectors = 0
-    [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]]
-    self.assertEquals(len(doc.laps), 6)
-    for lap in doc.laps:
+    # test two complete laps
+    session = Session()
+    session.num_sectors = 2
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]]
+    self.assertEquals(len(session.laps), 2)
+    self.assertEquals(session.laps[0].time, 30.0)
+    self.assertEquals(session.laps[0].start_time, 0.0)
+    self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
+    self.assertEquals(session.laps[1].time, 40.0)
+    self.assertEquals(session.laps[1].start_time, 30.0)
+    self.assertEquals(session.laps[1].sectors, [20.0, 10.0])
+
+    # test six laps, no sectors
+    session = Session()
+    session.num_sectors = 0
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0, 40.0, 50.0, 60.0]]
+    self.assertEquals(len(session.laps), 6)
+    start_time = 10.0
+    for index, lap in enumerate(session.laps):
+      self.assertEquals(lap.start_time, start_time * index)
       self.assertEquals(lap.sectors, [])
-      
-    doc = Session()
-    doc.num_sectors = 2
-    [doc.add_marker(m) for m in [10.0, 20.0, 30.0, 40.0]]
-    self.assertEquals(len(doc.laps), 2)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(doc.laps[0].time, 30.0)
-    self.assertEquals(doc.laps[1].sectors, [10.0, None])
-    self.assertEquals(doc.laps[1].time, None)
-    
-    doc = Session()
-    doc.num_sectors = 2
-    [doc.add_marker(m) for m in [10.0, 20.0]]
-    self.assertEquals(len(doc.laps), 1)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(doc.laps[0].time, None)
-    
-    doc = Session()
-    doc.num_sectors = 2
-    [doc.add_marker(m) for m in [10.0, 20.0, 30.0]]
-    self.assertEquals(len(doc.laps), 1)
-    self.assertEquals(doc.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(doc.laps[0].time, 30.0)
-    
-    doc = Session()
-    self.assertEquals(len(doc.laps), 0)  
-    
-    doc = Session()
-    [doc.add_marker(m) for m in [10.0, 20.0, 30.0]]
-    doc.num_sectors = 0
-    self.assertEquals(len(doc.laps), 3)
+
+    # test one lap, partially complete second lap
+    session = Session()
+    session.num_sectors = 2
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0, 40.0]]
+    self.assertEquals(len(session.laps), 2)
+    self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
+    self.assertEquals(session.laps[0].time, 30.0)
+    self.assertEquals(session.laps[0].start_time, 0.0)
+    self.assertEquals(session.laps[1].sectors, [10.0, None])
+    self.assertEquals(session.laps[1].time, None)
+    self.assertEquals(session.laps[1].start_time, 30.0)
+
+    # test one partially completed lap
+    session = Session()
+    session.num_sectors = 2
+    [session.add_marker(m) for m in [10.0, 20.0]]
+    self.assertEquals(len(session.laps), 1)
+    self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
+    self.assertEquals(session.laps[0].time, None)
+    self.assertEquals(session.laps[0].start_time, 0.0)
+
+    # test just a single lap
+    session = Session()
+    session.num_sectors = 2
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
+    self.assertEquals(len(session.laps), 1)
+    self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
+    self.assertEquals(session.laps[0].time, 30.0)
+    self.assertEquals(session.laps[0].start_time, 0.0)
+
+    # test empty session
+    session = Session()
+    self.assertEquals(len(session.laps), 0)
+
+    # test one lap, no markers
+    session = Session()
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
+    session.num_sectors = 0
+    self.assertEquals(len(session.laps), 3)
+    start_time = 10.0
+    for index, lap in enumerate(session.laps):
+      self.assertEquals(lap.start_time, start_time * index)
+      self.assertEquals(lap.sectors, [])    
     
   def testGetChannelOrGroup(self):
     channels = [

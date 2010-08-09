@@ -327,6 +327,9 @@ class Session(object):
     '''
     def make_relative(time, laps): 
       return time if not laps else time - sum([lap.time for lap in laps])
+
+    def make_start_time(laps):
+      return 0.0 if not laps else (laps[-1].start_time + laps[-1].time)
     
     def make_relative_sector(time, sectors):
       return time if not sectors else time - sum(sectors)
@@ -347,7 +350,8 @@ class Session(object):
       
       lap = Lap(
         sectors = sectors,
-        time = make_relative(g[-1], self._laps) if g[-1] else None
+        time = make_relative(g[-1], self._laps) if g[-1] else None,
+        start_time = make_start_time(self._laps)
       )
       lap.__parent__ = self
       self._laps.append(lap) 
@@ -364,9 +368,10 @@ class Session(object):
 
 class Lap(object):
   '''This class represents a single lap with a time and list of sectors.'''
-  def __init__(self, time=None, sectors=[]):
+  def __init__(self, start_time=None, time=None, sectors=[]):
     self._time = time
     self._sectors = sectors
+    self._start_time = start_time
     self._difference = None
     self.__parent__ = None
     
@@ -374,6 +379,11 @@ class Lap(object):
   def time(self):
     '''Gets the lap time (in seconds) of this lap.'''
     return self._time
+
+  @property
+  def start_time(self):
+    '''Gets the time (in seconds) within that this lap starts.'''
+    return self._start_time
   
   @property
   def sectors(self):
