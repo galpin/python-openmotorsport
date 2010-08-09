@@ -277,6 +277,42 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(doc.get_channel('Channel 5', group='Group 1'), channels[4])    
     self.assertEquals(doc.get_channel('Channel 5'), channels[5])
     self.assertEquals(doc.get_group('Group 1'), [channels[2], channels[4]])
+
+  def testGetDataForLap(self):
+    # test simple, constant sample interval
+    session = Session()
+    session.num_sectors = 0
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
+    session.add_channel(Channel(id=0, name='Channel 1',
+     data=self._get_test_data(100, 30.0), interval=100))
+    self.assertEquals(len(session.laps), 3)
+    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[0])), 100)
+    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[1])), 100)
+    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[2])), 100)
+
+  def testGetDataForLapVariable(self):
+    # test simple, variable sample interval
+    session = Session()
+    session.num_sectors = 0
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
+    session.add_channel(Channel(id=0, name='Channel 1',
+     data=self._get_test_data(1, 30.0), times=self._get_test_times(1, 30.0)))
+    self.assertEquals(len(session.laps), 3)
+    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[0])), 10)
+    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[1])), 10)
+    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[2])), 10)
+
+  # /----------------------------------------------------------------------/
+
+  def _get_test_data(self, sample_interval, duration):
+    num_samples = int((duration * 1000) / sample_interval)
+    return np.array([x * 0.1 for x in range(0, num_samples)], dtype=np.float32)
+
+  def _get_test_times(self, sample_interval, duration):
+    '''Gets sampling times at the specified interval (which technically
+    isn't variable, but never mind)'''
+    num_samples = int((duration * 1000) / sample_interval)
+    return np.array(range(0, num_samples, sample_interval), dtype=np.float32)
         
   # /----------------------------------------------------------------------/    
   

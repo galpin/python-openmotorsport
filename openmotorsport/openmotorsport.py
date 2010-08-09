@@ -384,6 +384,11 @@ class Lap(object):
   def start_time(self):
     '''Gets the time (in seconds) within that this lap starts.'''
     return self._start_time
+
+  @property
+  def end_time(self):
+    '''Convienience method that gets the time (in seconds that this lap ends).'''
+    return self.start_time + self.time
   
   @property
   def sectors(self):
@@ -507,7 +512,27 @@ class Channel(object):
   
   times = property(_gettimes, _settimes)
   '''An array of times for each data sample.'''
-  
+
+  def get_data_for_lap(self, lap):
+    '''Gets the data samples that correspond to a given Lap.'''
+    start_index, end_index = None, None
+    
+    if self.interval:
+      start_index = int(seconds_to_milliseconds(lap.start_time) / self.interval)
+      end_index = int(seconds_to_milliseconds(lap.end_time) / self.interval)
+    else:
+      # variable sample rate, indices according to Channel.times
+      for index, time in enumerate(self.times):
+        if time >= lap.start_time and start_index is None:
+          start_index = index
+        if time >= lap.end_time:
+          end_index = index
+          break
+      if not end_index:
+        end_index = len(self.data) - 1
+
+    return self.data[start_index:end_index]
+
   def __repr__(self):
     return '%s (%s) [%s]' % (self.name, self.group, self.interval)
 
@@ -593,7 +618,10 @@ def SubElementFromDictConditional(parent, dict, key):
   '''Creates an ElementTree text elelemnt from a given dict and key only if
   the key exist and its value is not None.'''
   if dict.has_key(key) and dict[key] is not None:
-    ET.SubElement(parent, key).text = dict[key] 
+    ET.SubElement(parent, key).text = dict[key]
+
+def seconds_to_milliseconds(seconds):
+  return seconds * 1000
   
 def to_iso8601_date(date):
   '''Gets an ISO-8601 string for a given date.'''
