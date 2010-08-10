@@ -21,7 +21,7 @@ from datetime import datetime
 import os
 import numpy as np
 
-from openmotorsport.openmotorsport import Session, Channel, Metadata
+from openmotorsport.openmotorsport import Session, Channel, Metadata, Lap
 from openmotorsport.utils import *
 
 class SessionTests(unittest.TestCase):
@@ -136,28 +136,25 @@ class SessionTests(unittest.TestCase):
       
   def testDataAppend(self):
     path = 'test_data.om'
-    
-    doc = Session()
-    doc.metadata = self._getSampleMeta()    
-    doc.add_channel(Channel(id=0, name='Channel 1',
-      interval='1'))
-    doc.add_channel(Channel(id=1, name='Channel 2',
-        interval='1'))      
-        
-    self.assertEquals(len(doc.channels[0].data), 0)
-    
+
+    # test a simple two channel session with sampling interval
+    session = Session()
+    session.metadata = self._getSampleMeta()
+    session.add_channel(Channel(id=0, name='Channel 1', interval='1'))
+    session.add_channel(Channel(id=1, name='Channel 2', interval='1'))
+    self.assertEquals(len(session.channels[0].data), 0)
     for x in range(0, 2):
       for y in range(0, 1000):
-        doc.channels[x].append(float(y))
-    
-    self.assertEquals(len(doc.channels[0].data), 1000)
-    self.assertEquals(len(doc.channels[1].data), 1000)
-    
-    doc.write(path)
+        session.channels[x].append(float(y))
+    self.assertEquals(len(session.channels[0].data), 1000)
+    self.assertEquals(len(session.channels[1].data), 1000)
+    session.write(path)
     self.assertTrue(os.path.exists(path))        
-    imported_doc = Session(path)
-    self.assertEquals(doc, imported_doc)
-    #os.remove(path)
+    imported_session = Session(path)
+    self.assertEquals(session, imported_session)
+
+
+    os.remove(path)
     
   def testChannelGroup(self):
     path = 'test_data.om'
@@ -195,11 +192,11 @@ class SessionTests(unittest.TestCase):
     session.num_sectors = 2
     [session.add_marker(m) for m in [10.0, 20.0, 30.0, 50.0, 60.0, 70.0]]
     self.assertEquals(len(session.laps), 2)
-    self.assertEquals(session.laps[0].time, 30.0)
-    self.assertEquals(session.laps[0].start_time, 0.0)
+    self.assertEquals(session.laps[0].length, 30.0)
+    self.assertEquals(session.laps[0].offset, 0.0)
     self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(session.laps[1].time, 40.0)
-    self.assertEquals(session.laps[1].start_time, 30.0)
+    self.assertEquals(session.laps[1].length, 40.0)
+    self.assertEquals(session.laps[1].offset, 30.0)
     self.assertEquals(session.laps[1].sectors, [20.0, 10.0])
 
     # test six laps, no sectors
@@ -209,7 +206,7 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(len(session.laps), 6)
     start_time = 10.0
     for index, lap in enumerate(session.laps):
-      self.assertEquals(lap.start_time, start_time * index)
+      self.assertEquals(lap.offset, start_time * index)
       self.assertEquals(lap.sectors, [])
 
     # test one lap, partially complete second lap
@@ -218,11 +215,11 @@ class SessionTests(unittest.TestCase):
     [session.add_marker(m) for m in [10.0, 20.0, 30.0, 40.0]]
     self.assertEquals(len(session.laps), 2)
     self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(session.laps[0].time, 30.0)
-    self.assertEquals(session.laps[0].start_time, 0.0)
+    self.assertEquals(session.laps[0].length, 30.0)
+    self.assertEquals(session.laps[0].offset, 0.0)
     self.assertEquals(session.laps[1].sectors, [10.0, None])
-    self.assertEquals(session.laps[1].time, None)
-    self.assertEquals(session.laps[1].start_time, 30.0)
+    self.assertEquals(session.laps[1].length, None)
+    self.assertEquals(session.laps[1].offset, 30.0)
 
     # test one partially completed lap
     session = Session()
@@ -230,8 +227,8 @@ class SessionTests(unittest.TestCase):
     [session.add_marker(m) for m in [10.0, 20.0]]
     self.assertEquals(len(session.laps), 1)
     self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(session.laps[0].time, None)
-    self.assertEquals(session.laps[0].start_time, 0.0)
+    self.assertEquals(session.laps[0].length, None)
+    self.assertEquals(session.laps[0].offset, 0.0)
 
     # test just a single lap
     session = Session()
@@ -239,8 +236,9 @@ class SessionTests(unittest.TestCase):
     [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
     self.assertEquals(len(session.laps), 1)
     self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(session.laps[0].time, 30.0)
-    self.assertEquals(session.laps[0].start_time, 0.0)
+    self.assertEquals(session.laps[0].length, 30.0)
+    self.assertEquals(session.laps[0].offset, 0.0)
+    
 
     # test empty session
     session = Session()
@@ -253,7 +251,7 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(len(session.laps), 3)
     start_time = 10.0
     for index, lap in enumerate(session.laps):
-      self.assertEquals(lap.start_time, start_time * index)
+      self.assertEquals(lap.offset, start_time * index)
       self.assertEquals(lap.sectors, [])    
     
   def testGetChannelOrGroup(self):
@@ -284,7 +282,7 @@ class SessionTests(unittest.TestCase):
     session.num_sectors = 0
     [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
     session.add_channel(Channel(id=0, name='Channel 1',
-     data=self._get_test_data(100, 30.0), interval=100))
+     data=get_test_data(100, 30.0), interval=100))
     self.assertEquals(len(session.laps), 3)
     self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[0])), 100)
     self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[1])), 100)
@@ -296,24 +294,12 @@ class SessionTests(unittest.TestCase):
     session.num_sectors = 0
     [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
     session.add_channel(Channel(id=0, name='Channel 1',
-     data=self._get_test_data(1, 30.0), times=self._get_test_times(1, 30.0)))
+     data=get_test_data(1, 30.0), times=get_test_times(1, 30.0)))
     self.assertEquals(len(session.laps), 3)
     self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[0])), 10)
     self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[1])), 10)
     self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[2])), 10)
 
-  # /----------------------------------------------------------------------/
-
-  def _get_test_data(self, sample_interval, duration):
-    num_samples = int((duration * 1000) / sample_interval)
-    return np.array([x * 0.1 for x in range(0, num_samples)], dtype=np.float32)
-
-  def _get_test_times(self, sample_interval, duration):
-    '''Gets sampling times at the specified interval (which technically
-    isn't variable, but never mind)'''
-    num_samples = int((duration * 1000) / sample_interval)
-    return np.array(range(0, num_samples, sample_interval), dtype=np.float32)
-        
   # /----------------------------------------------------------------------/    
   
   def _getSampleMeta(self):
@@ -341,6 +327,37 @@ class SessionTests(unittest.TestCase):
     date = datetime.now()
     return datetime(date.year, date.month, date.day, date.hour, 
       date.minute, date.second)
+
+class LapTests(unittest.TestCase):
+  def test_end_time(self):
+    # test basic
+    session = Session()
+    session.num_sectors = 0
+    [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
+    session.add_channel(Channel(id=0, name='Channel 1', interval=1,
+      data=get_test_data(interval=1, duration=30.0)))
+
+    self.assertEquals(len(session.laps), 3)
+    self.assertEquals(session.laps[0].end_time, 10.0)
+    self.assertEquals(session.laps[1].end_time, 20.0)
+    self.assertEquals(session.laps[2].end_time, 30.0)
+
+    # test with incomplete lap
+    session = Session()
+    session.num_sectors = 0
+    [session.add_marker(m) for m in [10.0, 20.0]]
+    session.add_channel(Channel(id=0, name='Channel 1', interval=1,
+      data=get_test_data(interval=1, duration=25.0)))
+    self.assertEquals(session.laps[0].end_time, 10.0)
+    self.assertEquals(session.laps[1].end_time, 20.0)
+
+    # test with no lap time but sector times
+    lap = Lap(offset=0.0, length=None, sectors=[10.0, 20.0])
+    self.assertEquals(lap.end_time, 20.0)
+
+    # test with no lap time but also no sectors
+    lap = Lap(offset=0.0, length=None, sectors=[])
+    self.assertEquals(lap.end_time, 0.0)
       
 class UtilsTests(unittest.TestCase):
 
@@ -427,7 +444,20 @@ class UtilsTests(unittest.TestCase):
     doc = Session()
     doc.num_sectors = 2
     doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(doc, 2), 10.0)   
-    
+    self.assertEquals(fastest_sector(doc, 2), 10.0)
+
+
+# utility functions
+  
+def get_test_data(interval, duration):
+  num_samples = int((duration * 1000) / interval)
+  return np.array([x * 0.1 for x in range(0, num_samples)], dtype=np.float32)
+
+def get_test_times(interval, duration):
+  '''Gets sampling times at the specified interval (which technically
+  isn't variable, but never mind)'''
+  num_samples = int((duration * 1000) / interval)
+  return np.array(range(0, num_samples, interval), dtype=np.float32)
+
 if __name__ == '__main__':
   unittest.main()
