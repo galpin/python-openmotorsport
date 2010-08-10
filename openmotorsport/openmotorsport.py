@@ -31,6 +31,7 @@ import itertools
 import xml.etree.ElementTree as ET
 import numpy as np
 import utils
+from time import *
 
 class Session(object):
   '''An instance of openmotorsport.Session represents a OpenMotorsport file.'''
@@ -326,14 +327,13 @@ class Session(object):
       A list of Lap instances.
     '''
     def make_relative(time, laps): 
-      return time if not laps else time - sum([lap.time for lap in laps])
+      return time if not laps else time - sum([lap.length for lap in laps])
 
     def make_start_time(laps):
-      return 0.0 if not laps else (laps[-1].start_time + laps[-1].time)
+      return 0.0 if not laps else (laps[-1].offset + laps[-1].length)
     
     def make_relative_sector(time, sectors):
-      return time if not sectors else time - sum(sectors)
-      
+      return time if not sectors else time - sum(sectors) 
       
     def grouper(iterable, n, fillvalue=None):
       return itertools.izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
@@ -350,8 +350,8 @@ class Session(object):
       
       lap = Lap(
         sectors = sectors,
-        time = make_relative(g[-1], self._laps) if g[-1] else None,
-        start_time = make_start_time(self._laps)
+        length = make_relative(g[-1], self._laps) if g[-1] else None,
+        offset = make_start_time(self._laps)
       )
       lap.__parent__ = self
       self._laps.append(lap) 
@@ -366,29 +366,31 @@ class Session(object):
             self.num_sectors == other.num_sectors and \
             np.equal(self.markers.all(), other.markers.all())
 
-class Lap(object):
-  '''This class represents a single lap with a time and list of sectors.'''
-  def __init__(self, start_time=None, time=None, sectors=[]):
-    self._time = time
+class Lap(Epoch):
+  '''
+  This class represents a single lap. It is a subclass of time.Epoch,
+  adding a list of sector times and additional lap-specific methods.
+  '''
+  def __init__(self, length, offset=0, sectors=[]):
+    super(Epoch, self).__init__()
+    self._length = length
+    self._offset = offset
     self._sectors = sectors
-    self._start_time = start_time
+
     self._difference = None
     self.__parent__ = None
-    
-  @property
-  def time(self):
-    '''Gets the lap time (in seconds) of this lap.'''
-    return self._time
-
-  @property
-  def start_time(self):
-    '''Gets the time (in seconds) within that this lap starts.'''
-    return self._start_time
 
   @property
   def end_time(self):
-    '''Convienience method that gets the time (in seconds that this lap ends).'''
-    return self.start_time + self.time
+    '''Gets the time (in seconds that this lap ends).
+    If this lap is incomplete then end_time will be equal to the time
+    of the last data sample.'''
+    if self.length is not None:
+      return self.offset + self.length
+    else:
+      if not self.sectors:
+        return self.offset
+      return self.offset + self.sectors[-1]
   
   @property
   def sectors(self):
@@ -403,11 +405,11 @@ class Lap(object):
     return self._difference
     
   def __repr__(self):
-    return '%.3f (%s)' % (self._time, self._sectors)
+    return '%.3f (%s)' % (self._length, self._sectors)
   
   def __eq__(self, other):
     return other and \
-      self.time == other.time and \
+      self.length == other.length and \
       self.sectors == other.sectors
       
 class Channel(object):
@@ -429,7 +431,12 @@ class Channel(object):
       times
         An initial numpy times array.
     '''
-    
+
+    # sanity check if no sample interval is given
+    if interval is None and len(data) != len(times):
+        raise ValueError('No sample interval given yet number of samples ' \
+          'and sample times are different.')
+        
     self._id = int(id)
     '''The unique identifier for this channel.'''
     
@@ -486,8 +493,11 @@ class Channel(object):
   def append(self, value, time=None):
     '''A convienience method to append a data sample and optional time.'''
     self._data = np.append(self._data, np.asanyarray([value], dtype=self._data.dtype))
-    if time:
-      self._times = np.append(self._time, np.asanyarray([value], dtype=self._times.dtype))   
+    if self._interval is None:
+      if time is None:
+        raise ValueError('When a channel has no sample interval, a value ' \
+         'and time must be given to append data.')
+      self._times = np.append(self._time, np.asanyarray([value], dtype=self._times.dtype))
 
   def _lazy_load(self):
     if self.__parent__ and not len(self._data):
@@ -518,12 +528,12 @@ class Channel(object):
     start_index, end_index = None, None
     
     if self.interval:
-      start_index = int(seconds_to_milliseconds(lap.start_time) / self.interval)
+      start_index = int(seconds_to_milliseconds(lap.offset) / self.interval)
       end_index = int(seconds_to_milliseconds(lap.end_time) / self.interval)
     else:
       # variable sample rate, indices according to Channel.times
       for index, time in enumerate(self.times):
-        if time >= lap.start_time and start_index is None:
+        if time >= lap.offset and start_index is None:
           start_index = index
         if time >= lap.end_time:
           end_index = index
