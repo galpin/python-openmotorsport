@@ -19,10 +19,8 @@
 import unittest
 from datetime import datetime
 import os
-import numpy as np
 
 from openmotorsport.openmotorsport import Session, Channel, Metadata, Lap
-from openmotorsport.utils import *
 from openmotorsport.time import *
 
 class SessionTests(unittest.TestCase):
@@ -224,7 +222,7 @@ class SessionTests(unittest.TestCase):
         id=0, name='Channel 1',
         timeseries=UniformTimeSeries(
           frequency=Frequency.from_interval(1),
-          data=get_test_data(interval=1, duration=30.0)
+          data=get_data(interval=1, duration=30.0)
         )
       )
     )
@@ -377,7 +375,7 @@ class LapTests(unittest.TestCase):
         id=0, name='Channel 1',
         timeseries=UniformTimeSeries(
           frequency=Frequency.from_interval(1),
-          data=get_test_data(interval=1, duration=30.0)
+          data=get_data(interval=1, duration=30.0)
         )
       )
     )
@@ -396,7 +394,7 @@ class LapTests(unittest.TestCase):
         id=0, name='Channel 1',
         timeseries=UniformTimeSeries(
           frequency=Frequency.from_interval(1),
-          data=get_test_data(interval=1, duration=25.0)
+          data=get_data(interval=1, duration=25.0)
         )
       )
     )    
@@ -411,101 +409,13 @@ class LapTests(unittest.TestCase):
     lap = Lap(offset=0.0, length=None, sectors=[])
     self.assertEquals(lap.end_time, 0.0)
       
-class UtilsTests(unittest.TestCase):
-
-  def testLapDifference(self):
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
-    self.assertEquals(lap_difference(doc, doc.laps[0]), None)
-    self.assertEquals(lap_difference(doc, doc.laps[1]), 10.0)
-    self.assertEquals(lap_difference(doc, doc.laps[2]), -20.0)
-    self.assertEquals(lap_difference(doc, doc.laps[2]), doc.laps[2].difference)
-    self.assertEquals(lap_difference(doc, doc.laps[1]), doc.laps[1].difference)
-    self.assertEquals(lap_difference(doc, doc.laps[0]), doc.laps[0].difference)
-    
-  def testFastestLapTime(self):
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
-    self.assertEquals(fastest_lap_time(doc), 20.0)
-    
-    # no markers at all
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = []
-    self.assertEquals(fastest_lap_time(doc), None)
-    
-    # no complete laps
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_lap_time(doc), None)
-    
-  def testFastestLap(self):
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
-    self.assertEquals(fastest_lap(doc), doc.laps[2])
-    
-    # no markers at all
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = []
-    self.assertEquals(fastest_lap(doc), None)
-    
-    # no complete laps
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_lap(doc), None)
-    
-  def testFastestSector(self):
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
-    self.assertEquals(fastest_sector(doc, 1), 5.0)
-    self.assertEquals(fastest_sector(doc, 2), 5.0)
-    
-    # no markers at all
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = []
-    self.assertEquals(fastest_sector(doc, 1), None)
-    
-    # no complete laps
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(doc, 2), 10.0)
-    
-  def testIsFastestSector(self):
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
-    self.assertTrue(is_fastest_sector(doc, 1, 5.0))
-    self.assertTrue(is_fastest_sector(doc, 2, 5.0))   
-    
-    # no markers at all
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = []
-    self.assertEquals(fastest_sector(doc, 1), None)
-    
-    # no complete laps
-    doc = Session()
-    doc.num_sectors = 2
-    doc.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(doc, 2), 10.0)
-
-
 # utility functions
   
-def get_test_data(interval, duration):
+def get_data(interval, duration):
   num_samples = int((duration * 1000) / interval)
   return np.array([x * 0.1 for x in range(0, num_samples)], dtype=np.float32)
 
-def get_test_times(interval, duration):
+def get_times(interval, duration):
   '''Gets sampling times at the specified interval (which technically
   isn't variable, but never mind)'''
   num_samples = int((duration * 1000) / interval)
