@@ -141,9 +141,9 @@ class Session(object):
       self._zipfile.writestr('meta.xml', self._write_meta())            
 
       for c in self.channels:
-        write_binary(c.data, self._zipfile, 'data/%s.bin' % c.id)
-        if not c.interval and c.times is not None:
-          write_binary(c.times, self._zipfile, 'data/%s.tms' % c.id)
+        write_binary(c.timeseries.data, self._zipfile, 'data/%s.bin' % c.id)
+        if not hasattr(c.timeseries, "frequency"):
+          write_binary(c.timeseries.times, self._zipfile, 'data/%s.tms' % c.id)
 
       self._zipfile.close()
       return filepath
@@ -151,20 +151,14 @@ class Session(object):
       # delete a partial file on error
       os.remove(filepath)
       raise
-    
-  def _read_channel(self, channel):                    
-    '''Read the binary data (and times, if necessary) for a given a channel.'''
-    try:
-      p = 'data/%s.bin' % channel.id
-      channel.data = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
 
-      if not channel.interval:
-        # variable frequency, we need to read the acompanying times
-        p = 'data/%s.tms' % channel.id
-        channel.times = np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
-    except KeyError:
-      raise ImportError('Cannot find data file for %s (id = %s)' 
-        % (channel.name, channel.id))    
+  def _read_channel_data(self, channel_id):
+    p = 'data/%s.bin' % channel_id
+    return np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.float32)
+
+  def _read_channel_times(self, channel_id):
+    p = 'data/%s.tms' % channel_id
+    return np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.int32)  
     
   def _write_meta(self):
     '''Generate the meta.xml file and return the contents as a string.'''
@@ -215,8 +209,8 @@ class Session(object):
         
       node.attrib['id'] = str(channel.id)
       
-      if channel.interval:
-        node.attrib["interval"] = str(channel.interval)
+      if hasattr(channel.timeseries, "frequency"):
+        node.attrib["interval"] = str(channel.timeseries.frequency.interval)
       if channel.units:
         node.attrib['units'] = channel.units
     
@@ -236,7 +230,7 @@ class Session(object):
       
     for marker in self.markers:
       node = ET.SubElement(markers, 'marker')
-      node.attrib["time"] = '%.2f' % float(marker)
+      node.attrib["time"] = '%d' % int(marker)
         
     return ET.tostring(root, encoding='UTF-8')
 
@@ -251,7 +245,8 @@ class Session(object):
       self._parse_meta(root)
       self._parse_markers(root)      
       self._parse_channels(root)
-    except KeyError:
+    except KeyError, e:
+      # TODO fix
       raise Exception('meta.xml was not found.')
       
     # the zipfile is left open (for lazy loading of data)             
@@ -290,10 +285,20 @@ class Session(object):
   def _parse_channels(self, root, group=None):
     '''Parses meta.xml/channels (and groups) from a given ElementTree root.'''
     def parse_channel(node, group=None):
+      id = int(node.get('id'))
+      interval = node.get('interval')
+      if interval is None:
+        timeseries = LazyVariableTimeSeries(parent=self, channel_id=id)
+      else:
+        timeseries = LazyUniformTimeSeries(
+          parent=self, channel_id=id,
+          frequency=Frequency.from_interval(interval)
+        )
+        
       channel = Channel(
         id = node.get('id'),
         name = node.findtext(ns('name')),
-        interval = node.get('interval'),
+        timeseries = timeseries,
         units = node.get('units'),
         description = node.findtext(ns('description')),
         group = group
@@ -360,11 +365,14 @@ class Session(object):
     return '%s' % self.metadata  
         
   def __eq__(self, other):
-    return other and \
+    try:
+      return other and \
             self.metadata == other.metadata and \
-            self.channels == other.channels and \
             self.num_sectors == other.num_sectors and \
-            np.equal(self.markers.all(), other.markers.all())
+            self.channels == other.channels and \
+            np.equal(self.markers, other.markers).all()
+    except:
+      return False
 
 class Lap(Epoch):
   '''
@@ -419,45 +427,32 @@ class Channel(object):
               name=None,              
               group=None,
               units=None,
-              interval=None,
               description=None,
-              data=np.array([], dtype=np.float32), 
-              times=np.array([], dtype=np.float32)):
-    '''Contructs a new instance of Channel.
-    
-    Arguments:
-      data
-        An initial numpy data array.
-      times
-        An initial numpy times array.
+              timeseries=VariableTimeSeries()):
     '''
+    Contructs a new instance of Channel.
 
-    # sanity check if no sample interval is given
-    if interval is None and len(data) != len(times):
-        raise ValueError('No sample interval given yet number of samples ' \
-          'and sample times are different.')
-        
+    Arguments:
+      id
+        The unique identifier for this channel.
+      name
+        The channel name. [optional]
+      group
+        The channel group name. [optional]
+      units
+        The abbreviated units of measurement for this channel. [optional]
+      description
+        A textual description of this channel. [optional]
+      timeseries
+        An initial timeseries for this channel. If none is specified, it
+        will default to an empty instance of VariableTimeSeries. [optional].
+    '''
     self._id = int(id)
-    '''The unique identifier for this channel.'''
-    
     self._name = name
-    '''The channel name.'''
-    
     self._group = group
-    '''The channel group name.'''
-    
-    self._interval = interval
-    '''The sample interval for this channel. If not specified (None) then the
-    time of each sample will be provided in Channel.times.'''
-    
     self._units = units
-    '''The abbreviated units of measurement for this channel.'''
-    
     self._description = description
-    '''A textual description of this channel.'''
-    
-    self._data = data
-    self._times = times
+    self._timeseries = timeseries
     self.__parent__ = None
         
   @property 
@@ -474,12 +469,7 @@ class Channel(object):
   def group(self):
     '''Gets the channel group [read-only].'''
     return self._group
-  
-  @property
-  def interval(self):
-    '''Gets the channel interval [read-only].'''
-    return self._interval
-  
+
   @property
   def units(self):
     '''Gets the channel units [read-only].'''
@@ -489,71 +479,21 @@ class Channel(object):
   def description(self):
     '''Gets the channel description [read-only].'''
     return self._description
-    
-  def append(self, value, time=None):
-    '''A convienience method to append a data sample and optional time.'''
-    self._data = np.append(self._data, np.asanyarray([value], dtype=self._data.dtype))
-    if self._interval is None:
-      if time is None:
-        raise ValueError('When a channel has no sample interval, a value ' \
-         'and time must be given to append data.')
-      self._times = np.append(self._time, np.asanyarray([value], dtype=self._times.dtype))
 
-  def _lazy_load(self):
-    if self.__parent__ and not len(self._data):
-      self.__parent__._read_channel(self)
-      
-  def _getdata(self):
-    self._lazy_load()
-    return self._data
-  
-  def _setdata(self, data):
-    self._data = data
-  
-  data = property(_getdata, _setdata)
-  '''An array of data samples for this channel.'''
-  
-  def _gettimes(self):
-    self._lazy_load()
-    return self._times
-  
-  def _settimes(self, times):
-    self._times = times
-  
-  times = property(_gettimes, _settimes)
-  '''An array of times for each data sample.'''
-
-  def get_data_for_lap(self, lap):
-    '''Gets the data samples that correspond to a given Lap.'''
-    start_index, end_index = None, None
-    
-    if self.interval:
-      start_index = int(seconds_to_milliseconds(lap.offset) / self.interval)
-      end_index = int(seconds_to_milliseconds(lap.end_time) / self.interval)
-    else:
-      # variable sample rate, indices according to Channel.times
-      for index, time in enumerate(self.times):
-        if time >= lap.offset and start_index is None:
-          start_index = index
-        if time >= lap.end_time:
-          end_index = index
-          break
-      if not end_index:
-        end_index = len(self.data) - 1
-
-    return self.data[start_index:end_index]
+  @property
+  def timeseries(self):
+    '''Gets the channel timeseries [read-only].'''
+    return self._timeseries
 
   def __repr__(self):
-    return '%s (%s) [%s]' % (self.name, self.group, self.interval)
+    return 'Channel %s (%s)' % (self.name, self.group)
 
   def __eq__(self, other):
     return other and \
           self.id == other.id and \
           self.name == other.name and \
           self.group == other.group and \
-          self.interval == other.interval and \
-          len(self.data) == len(other.data)
-
+          self.timeseries == other.timeseries
 
 class Metadata(object):
   '''This class represents the metadata associated with an OpenMotorsport session.'''  
@@ -615,7 +555,72 @@ class Metadata(object):
       self.date == other.date and \
       self.comments == other.comments                  
 
-# /----------------------------------------------------------------------/    
+# /----------------------------------------------------------------------/
+
+class LazyVariableTimeSeries(VariableTimeSeries):
+  '''
+  A subclass of time.VariableTimeSeries that provides lazy initialisation of
+  data and times.
+  '''
+  def __init__(self, parent, channel_id):
+    '''
+    Construct a new instance of LazyVariableTimeSeries.
+
+    Arguments:
+      parent
+        The parent instance of openmotorsport.Session.
+      channel_id
+        The identifier of the channel this timeseries represents.
+    '''
+    self._parent = parent
+    self._channel_id = channel_id
+    self._loaded_data = False
+    self._loaded_times = False
+    VariableTimeSeries.__init__(self)    
+    
+  @property
+  def data(self):
+    if not self._loaded_data:
+      self._data = self._parent._read_channel_data(self._channel_id)
+      self._loaded_data = True
+    return self._data
+    
+  @property
+  def times(self):
+    if not self._loaded_times:
+      self._times = self._parent._read_channel_times(self._channel_id)
+      self._loaded_times = True
+    return self._times
+
+class LazyUniformTimeSeries(UniformTimeSeries):
+  '''
+  A subclass of time.UniformTimeSeries that provides lazy initialisation of data.
+  '''
+  def __init__(self, frequency, parent, channel_id):
+    '''
+    Construct a new instance of LazyUniformTimeSeries.
+
+    Arguments:
+      frequency
+        The sample frequency of this channel, an instance of time.Frequency.
+      parent
+        The parent instance of openmotorsport.Session.
+      channel_id
+        The identifier of the channel this timeseries represents.
+    '''
+    self._parent = parent
+    self._channel_id = channel_id
+    self._loaded_data = False
+    UniformTimeSeries.__init__(self, frequency=frequency)
+
+  @property
+  def data(self):
+    if not self._loaded_data:
+      self._data = self._parent._read_channel_data(self._channel_id)
+      self._loaded_data = True
+    return self._data
+
+# /----------------------------------------------------------------------/
 
 # NB: Upper Camel Case for consistency with ElementTree.                   
 def SubElementFromDict(parent, dict, key):

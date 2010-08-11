@@ -23,6 +23,7 @@ import numpy as np
 
 from openmotorsport.openmotorsport import Session, Channel, Metadata, Lap
 from openmotorsport.utils import *
+from openmotorsport.time import *
 
 class SessionTests(unittest.TestCase):
   
@@ -63,14 +64,28 @@ class SessionTests(unittest.TestCase):
     path = 'test_data.om'
     original_doc = Session()
     original_doc.metadata = self._getSampleMeta()    
-    original_doc.add_channel(Channel(id=0, name='Channel 1',
-      interval='1', data=self._getSampleData()))      
-    original_doc.add_channel(Channel(id=1, name='Channel 2',
-      interval='1', data=self._getSampleData()))            
+    original_doc.add_channel(
+      Channel(
+        id=0, name='Channel 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=self._getSampleData()
+        )
+      )
+    )
+    original_doc.add_channel(
+      Channel(
+        id=1, name='Channel 2',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=self._getSampleData()
+        )
+      )
+    )
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
-    for channel in imported_doc.channels: channel.data # lazy
+    for channel in imported_doc.channels: channel.timeseries.data # lazy
     self.assertEquals(original_doc, imported_doc)
     os.remove(path)
     
@@ -80,9 +95,9 @@ class SessionTests(unittest.TestCase):
     original_doc = Session()
     original_doc.metadata = self._getSampleMeta()    
     original_doc.add_channel(Channel(id=0, name='Channel 1',
-     data=self._getSampleData(), times=self._getSampleData()))
-    original_doc.add_channel(Channel(id=1, name='Channel 2',
-      interval='10', data=self._getSampleData()))            
+      timeseries=VariableTimeSeries(data=self._getSampleData(),
+                                    times=self._getSampleData())
+    ))          
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
@@ -93,11 +108,25 @@ class SessionTests(unittest.TestCase):
   def testWriteWithMarkers(self):
     path = 'test_markers.om'
     original_doc = Session()
-    original_doc.metadata = self._getSampleMeta()    
-    original_doc.add_channel(Channel(id=0, name='Channel 1',
-      interval='1', data=self._getSampleData()))
-    original_doc.add_channel(Channel(id=1, name='Channel 2',
-      interval='1', data=self._getSampleData()))         
+    original_doc.metadata = self._getSampleMeta()
+    original_doc.add_channel(
+      Channel(
+        id=0, name='Channel 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=self._getSampleData()
+        )
+      )
+    )
+    original_doc.add_channel(
+      Channel(
+        id=1, name='Channel 2',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=self._getSampleData()
+        )
+      )
+    )       
     [original_doc.add_marker(m) for m in [1.0, 2.0, 3.0]]
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
@@ -109,11 +138,25 @@ class SessionTests(unittest.TestCase):
   def testWriteWithSectors(self):
     path = 'test_markers.om'
     original_doc = Session()
-    original_doc.metadata = self._getSampleMeta()    
-    original_doc.add_channel(Channel(id=0, name='Channel 1',
-      interval='1', data=self._getSampleData()))
-    original_doc.add_channel(Channel(id=1, name='Channel 2',
-      interval='1', data=self._getSampleData()))         
+    original_doc.metadata = self._getSampleMeta()
+    original_doc.add_channel(
+      Channel(
+        id=0, name='Channel 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=self._getSampleData()
+        )
+      )
+    )
+    original_doc.add_channel(
+      Channel(
+        id=1, name='Channel 2',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=self._getSampleData()
+        )
+      )
+    )        
     [original_doc.add_marker(m) for m in [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]]
     original_doc.num_sectors = 2
     original_doc.write(path)
@@ -140,14 +183,28 @@ class SessionTests(unittest.TestCase):
     # test a simple two channel session with sampling interval
     session = Session()
     session.metadata = self._getSampleMeta()
-    session.add_channel(Channel(id=0, name='Channel 1', interval='1'))
-    session.add_channel(Channel(id=1, name='Channel 2', interval='1'))
-    self.assertEquals(len(session.channels[0].data), 0)
+    session.add_channel(
+      Channel(
+        id=0, name='Channel 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1)
+        )
+      )
+    )
+    session.add_channel(
+      Channel(
+        id=1, name='Channel 2',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1)
+        )
+      )
+    )
+    self.assertEquals(len(session.channels[0].timeseries), 0)
     for x in range(0, 2):
       for y in range(0, 1000):
-        session.channels[x].append(float(y))
-    self.assertEquals(len(session.channels[0].data), 1000)
-    self.assertEquals(len(session.channels[1].data), 1000)
+        session.channels[x].timeseries.append(float(y))
+    self.assertEquals(len(session.channels[0].timeseries), 1000)
+    self.assertEquals(len(session.channels[1].timeseries), 1000)
     session.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_session = Session(path)
@@ -162,24 +219,29 @@ class SessionTests(unittest.TestCase):
     original_doc.metadata = self._getSampleMeta()    
     
     # no group
-    original_doc.add_channel(Channel(id=0, name='Channel 1',
-      interval='1', data=self._getSampleData()))      
+    original_doc.add_channel(
+      Channel(
+        id=0, name='Channel 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=get_test_data(interval=1, duration=30.0)
+        )
+      )
+    )
     original_doc.channels.extend([
       Channel(
-        id=1, 
-        name='Channel 2', 
-        interval='1', # TODO as ints
-        data=self._getSampleData(),
-        group='Group 2'
+        id=1, name='Channel 2', group='Group 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1)
+        )
       ),
       Channel(
-        id=2, 
-        name='Channel 3', 
-        interval='1', 
-        data=self._getSampleData(),
-        group='Group 1'
-      )]
-    )
+        id=2, name='Channel 3', group='Group 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1)
+        )
+      )
+    ])
     original_doc.write(path)
     self.assertTrue(os.path.exists(path))        
     imported_doc = Session(path)
@@ -276,30 +338,6 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(doc.get_channel('Channel 5'), channels[5])
     self.assertEquals(doc.get_group('Group 1'), [channels[2], channels[4]])
 
-  def testGetDataForLap(self):
-    # test simple, constant sample interval
-    session = Session()
-    session.num_sectors = 0
-    [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
-    session.add_channel(Channel(id=0, name='Channel 1',
-     data=get_test_data(100, 30.0), interval=100))
-    self.assertEquals(len(session.laps), 3)
-    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[0])), 100)
-    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[1])), 100)
-    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[2])), 100)
-
-  def testGetDataForLapVariable(self):
-    # test simple, variable sample interval
-    session = Session()
-    session.num_sectors = 0
-    [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
-    session.add_channel(Channel(id=0, name='Channel 1',
-     data=get_test_data(1, 30.0), times=get_test_times(1, 30.0)))
-    self.assertEquals(len(session.laps), 3)
-    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[0])), 10)
-    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[1])), 10)
-    self.assertEquals(len(session.get_channel('Channel 1').get_data_for_lap(session.laps[2])), 10)
-
   # /----------------------------------------------------------------------/    
   
   def _getSampleMeta(self):
@@ -334,8 +372,15 @@ class LapTests(unittest.TestCase):
     session = Session()
     session.num_sectors = 0
     [session.add_marker(m) for m in [10.0, 20.0, 30.0]]
-    session.add_channel(Channel(id=0, name='Channel 1', interval=1,
-      data=get_test_data(interval=1, duration=30.0)))
+    session.add_channel(
+      Channel(
+        id=0, name='Channel 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=get_test_data(interval=1, duration=30.0)
+        )
+      )
+    )
 
     self.assertEquals(len(session.laps), 3)
     self.assertEquals(session.laps[0].end_time, 10.0)
@@ -346,8 +391,15 @@ class LapTests(unittest.TestCase):
     session = Session()
     session.num_sectors = 0
     [session.add_marker(m) for m in [10.0, 20.0]]
-    session.add_channel(Channel(id=0, name='Channel 1', interval=1,
-      data=get_test_data(interval=1, duration=25.0)))
+    session.add_channel(
+      Channel(
+        id=0, name='Channel 1',
+        timeseries=UniformTimeSeries(
+          frequency=Frequency.from_interval(1),
+          data=get_test_data(interval=1, duration=25.0)
+        )
+      )
+    )    
     self.assertEquals(session.laps[0].end_time, 10.0)
     self.assertEquals(session.laps[1].end_time, 20.0)
 
