@@ -89,62 +89,8 @@ class Epoch(object):
   def offset(self):
     return self._offset
 
-class BaseTimeSeries(object):
-  '''
-  BaseTimeSeries is an abstract base class to all TimeSeries implementations.
-  This class should not be instantiated.
-  '''
-  def __init__(self):
-    self._offset = 0
-    self._data = np.array([], dtype=np.float32)
 
-  @property
-  def offset(self):
-    '''Gets the start time of this time series'''
-    return self._offset
-
-  @property
-  def data(self):
-    return self._data
-
-  @property
-  def duration(self):
-    raise NotImplementedError('This method is not implemented.')    
-
-  @property
-  def end_time(self):
-    '''Gets the end time of this time series (start time plus duration).'''
-    return self.offset + self.duration
-
-  def at(self, time):
-    '''Gets a data sample at a given time.'''
-    raise NotImplementedError('This method is not implemented.')
-
-  def get(self, index):
-    '''Gets a data sample at a given index.'''
-    return self.data[index]
-
-  def slice(self, epoch):
-    raise NotImplementedError('This method is not implemented.')
-
-  def resample(self, frequency):
-    raise NotImplementedError('This method is not implemented.')
-
-  def __len__(self):
-    return np.size(self.data)
-
-  def __eq__(self, other):
-    if hasattr(other, 'data') and hasattr(other, 'times'):
-      try:
-        return np.equal(self.data, other.data).all()
-      except ValueError:
-        return False
-    return False
-
-  def __ne__(self, other):
-    return not self.__eq__(other)
-
-class VariableTimeSeries(BaseTimeSeries):
+class VariableTimeSeries(object):
   '''This class represents a time series with a variable sampling rate.'''
 
   def __init__(self, data=[], times=[], offset=0):
@@ -161,19 +107,36 @@ class VariableTimeSeries(BaseTimeSeries):
       raise ValueError('Data/times mismatch. Lengths must be equal.')
 
   @property
+  def data(self):
+    return self._data
+
+  @property
   def times(self):
     '''Gets the array of sample times.'''
     return self._times
 
   @property
+  def offset(self):
+    return self._offset
+    
+  @property
   def duration(self):
     '''Gets the duration of this time series.'''
     return 0 if not len(self.times) else self.times[-1]
+
+  @property
+  def end_time(self):
+    '''Gets the end time of this time series (start time plus duration).'''
+    return self.offset + self.duration
 
   def at(self, time):
     '''Gets a data sample at a given time using linear interpolation.'''
     f = interpolate.interp1d(self.times, self.data)  # TODO cache
     return f(time)
+
+  def get(self, index):
+    '''Gets a data sample at a given index.'''
+    return self.data[index]
 
   def index_at(self, time):
     indices = np.where(self.times >= time)[0]
@@ -210,6 +173,9 @@ class VariableTimeSeries(BaseTimeSeries):
     self._times = np.append(self.times,
                             np.asanyarray(time, dtype=self._data.dtype))
 
+  def __len__(self):
+    return np.size(self.data)
+
   def __eq__(self, other):
     if hasattr(other, 'data') and hasattr(other, 'times'):
       try:
@@ -219,7 +185,10 @@ class VariableTimeSeries(BaseTimeSeries):
         return False
     return False
 
-class UniformTimeSeries(VariableTimeSeries):
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
+class UniformTimeSeries(object):
   '''
   This class represents a time series with uniform data samples.
   '''
@@ -237,9 +206,22 @@ class UniformTimeSeries(VariableTimeSeries):
     return len(self) * self._frequency.interval
 
   @property
+  def data(self):
+    return self._data
+
+  @property
+  def offset(self):
+    return self._offset
+
+  @property
   def times(self):
     # TODO cache
     return np.arange(self.offset, self.end_time, self.frequency.interval)
+    
+  @property
+  def end_time(self):
+    '''Gets the end time of this time series (start time plus duration).'''
+    return self.offset + self.duration
 
   def append(self, data):
     '''Appends a given data sample to this time series.'''
@@ -248,9 +230,12 @@ class UniformTimeSeries(VariableTimeSeries):
 
   def at(self, time):
     '''Gets a data sample at a given time using linear interpolation.'''    
-    times = np.arange(self.offset, self.end_time, self.frequency.interval)
-    f = interpolate.interp1d(times, self.data)
+    f = interpolate.interp1d(self.times, self.data)
     return f(time)
+
+  def get(self, index):
+    '''Gets a data sample at a given index.'''
+    return self.data[index]    
 
   def slice(self, epoch):
     times = np.arange(self.offset, self.end_time, self.frequency.interval)
@@ -280,6 +265,9 @@ class UniformTimeSeries(VariableTimeSeries):
     # TODO find appropriate resampling method
     return signal.resample(self.data, factor * len(self))
 
+  def __len__(self):
+    return np.size(self.data)
+    
   def __eq__(self, other):
     if hasattr(other, 'data') and hasattr(other, 'frequency'):
       try:
@@ -288,3 +276,6 @@ class UniformTimeSeries(VariableTimeSeries):
       except ValueError:
         return False
     return False
+    
+  def __ne__(self, other):
+    return not self.__eq__(other)    

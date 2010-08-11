@@ -84,6 +84,13 @@ class VariableTimeSeriesTests(unittest.TestCase):
 
     self.assertRaises(ValueError, ts.append, [1,2,3], [])
 
+  def test_get(self):
+    ts = VariableTimeSeries(data=[1,2,3], times=[1,2,3])
+    self.assertEqual(ts.get(0), 1)
+    self.assertEqual(ts.get(1), 2)
+    self.assertEqual(ts.get(2), 3)    
+    self.assertRaises(IndexError, ts.get, 4)
+
   def test_at(self):
     ts = VariableTimeSeries()
     self.assertRaises(ValueError, ts.at, 1)
@@ -121,7 +128,7 @@ class VariableTimeSeriesTests(unittest.TestCase):
     self.assertTrue(ts1 == ts1)
     self.assertFalse(ts1 == ts2)
     self.assertTrue(ts2 != ts1)
-
+    self.assertFalse(ts2 == None)
 
 class TimeSeriesTests(unittest.TestCase):
   def test_TimeSeries(self):
@@ -197,6 +204,14 @@ class TimeSeriesTests(unittest.TestCase):
     self.assertFalse(ts1 == ts3)
     self.assertTrue(ts1 != ts2)
     self.assertTrue(ts1 != ts3)
+    self.assertFalse(ts1 == None)
+
+  def test_get(self):
+    ts = UniformTimeSeries(Frequency(5), data=[1,2,3])
+    self.assertEqual(ts.get(0), 1)
+    self.assertEqual(ts.get(1), 2)
+    self.assertEqual(ts.get(2), 3)
+    self.assertRaises(IndexError, ts.get, 4)
 
 if __name__ == '__main__':
   unittest.main()
