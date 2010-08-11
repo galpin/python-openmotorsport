@@ -143,7 +143,7 @@ class VariableTimeSeries(BaseTimeSeries):
     Raises ValueError if data and times are not of equal length.
     '''
     self._data = np.array(data, dtype=np.float32)
-    self._times = np.array(times, dtype=np.float32)
+    self._times = np.array(times, dtype=np.int32)
     self._offset = offset
       
     if np.size(self.data) != np.size(self.times):
@@ -217,6 +217,11 @@ class UniformTimeSeries(VariableTimeSeries):
   def duration(self):
     return len(self) * self._frequency.interval
 
+  @property
+  def times(self):
+    # TODO cache
+    return np.arange(self.offset, self.end_time, self.frequency.interval)
+
   def append(self, data):
     '''Appends a given data sample to this time series.'''
     self._data = np.append(self._data,
@@ -255,4 +260,3 @@ class UniformTimeSeries(VariableTimeSeries):
     factor = frequency.frequency / self.frequency.frequency
     # TODO find appropriate resampling method
     return signal.resample(self.data, factor * len(self))
-    
