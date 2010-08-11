@@ -133,6 +133,17 @@ class BaseTimeSeries(object):
   def __len__(self):
     return np.size(self.data)
 
+  def __eq__(self, other):
+    if hasattr(other, 'data') and hasattr(other, 'times'):
+      try:
+        return np.equal(self.data, other.data).all()
+      except ValueError:
+        return False
+    return False
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
 class VariableTimeSeries(BaseTimeSeries):
   '''This class represents a time series with a variable sampling rate.'''
 
@@ -199,6 +210,14 @@ class VariableTimeSeries(BaseTimeSeries):
     self._times = np.append(self.times,
                             np.asanyarray(time, dtype=self._data.dtype))
 
+  def __eq__(self, other):
+    if hasattr(other, 'data') and hasattr(other, 'times'):
+      try:
+        return np.equal(self.data, other.data).all() and \
+          np.equal(self.times, other.times).all()
+      except ValueError:
+        return False
+    return False
 
 class UniformTimeSeries(VariableTimeSeries):
   '''
@@ -260,3 +279,12 @@ class UniformTimeSeries(VariableTimeSeries):
     factor = frequency.frequency / self.frequency.frequency
     # TODO find appropriate resampling method
     return signal.resample(self.data, factor * len(self))
+
+  def __eq__(self, other):
+    if hasattr(other, 'data') and hasattr(other, 'frequency'):
+      try:
+        return self.frequency == other.frequency and \
+          np.equal(self.data, other.data).all()
+      except ValueError:
+        return False
+    return False

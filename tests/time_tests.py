@@ -115,6 +115,14 @@ class VariableTimeSeriesTests(unittest.TestCase):
     assert_array_equal(ts.slice(Epoch(offset=1, length=2)).data, [1,2,3])
     self.assertRaises(ValueError, ts.slice, Epoch(offset=0, length=4))
 
+  def test_equality(self):
+    ts1 = VariableTimeSeries([1,2,3], [1,2,3])
+    ts2 = VariableTimeSeries([1,2,3,4], [1,2,3,4])
+    self.assertTrue(ts1 == ts1)
+    self.assertFalse(ts1 == ts2)
+    self.assertTrue(ts2 != ts1)
+
+
 class TimeSeriesTests(unittest.TestCase):
   def test_TimeSeries(self):
     ts = UniformTimeSeries(Frequency(5))
@@ -179,6 +187,16 @@ class TimeSeriesTests(unittest.TestCase):
     self.assertEqual(len(ts.resample(Frequency(20))), 40)
     ts = UniformTimeSeries(Frequency(5), [])
     self.assertEqual(len(ts.resample(Frequency(10))), 0)
+
+  def test_equality(self):
+    ts1 = UniformTimeSeries(Frequency(5), [10,20,30,40,50,60,70,80,90,100])
+    ts2 = UniformTimeSeries(Frequency(10), [10,20,30,40,50,60,70,80,90,100])    
+    ts3 = UniformTimeSeries(Frequency(5), [])
+    self.assertTrue(ts1 == ts1)
+    self.assertFalse(ts1 == ts2)
+    self.assertFalse(ts1 == ts3)
+    self.assertTrue(ts1 != ts2)
+    self.assertTrue(ts1 != ts3)
 
 if __name__ == '__main__':
   unittest.main()
