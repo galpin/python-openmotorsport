@@ -55,7 +55,7 @@ class Frequency(object):
     >>> f.frequency
     5
     '''
-    f = Frequency(BASE_TIME / interval)
+    f = Frequency(BASE_TIME / int(interval))
     return f
 
   @property
@@ -114,7 +114,7 @@ class BaseTimeSeries(object):
   @property
   def end_time(self):
     '''Gets the end time of this time series (start time plus duration).'''
-    return self._offset + self.duration
+    return self.offset + self.duration
 
   def at(self, time):
     '''Gets a data sample at a given time.'''
@@ -122,7 +122,7 @@ class BaseTimeSeries(object):
 
   def get(self, index):
     '''Gets a data sample at a given index.'''
-    return self._data[index]
+    return self.data[index]
 
   def slice(self, epoch):
     raise NotImplementedError('This method is not implemented.')
@@ -131,7 +131,7 @@ class BaseTimeSeries(object):
     raise NotImplementedError('This method is not implemented.')
 
   def __len__(self):
-    return np.size(self._data)
+    return np.size(self.data)
 
 class VariableTimeSeries(BaseTimeSeries):
   '''This class represents a time series with a variable sampling rate.'''
@@ -157,11 +157,11 @@ class VariableTimeSeries(BaseTimeSeries):
   @property
   def duration(self):
     '''Gets the duration of this time series.'''
-    return 0 if not len(self._times) else self._times[-1]
+    return 0 if not len(self.times) else self.times[-1]
 
   def at(self, time):
     '''Gets a data sample at a given time using linear interpolation.'''
-    f = interpolate.interp1d(self._times, self._data)  # TODO cache
+    f = interpolate.interp1d(self.times, self.data)  # TODO cache
     return f(time)
 
   def index_at(self, time):
@@ -194,9 +194,9 @@ class VariableTimeSeries(BaseTimeSeries):
     if np.size(data) != np.size(time):
       raise ValueError('Data/times mismatch. Lengths must be equal.')
 
-    self._data = np.append(self._data,
+    self._data = np.append(self.data,
                            np.asanyarray(data, dtype=self._data.dtype))
-    self._times = np.append(self._times,
+    self._times = np.append(self.times,
                             np.asanyarray(time, dtype=self._data.dtype))
 
 
@@ -204,7 +204,7 @@ class UniformTimeSeries(VariableTimeSeries):
   '''
   This class represents a time series with uniform data samples.
   '''
-  def __init__(self, frequency, data=[], offset=0):
+  def __init__(self, frequency, data=[], offset=0, **kwargs):
     self._frequency = frequency
     self._data = np.array(data, dtype=np.float32)
     self._offset = offset
@@ -224,7 +224,7 @@ class UniformTimeSeries(VariableTimeSeries):
 
   def append(self, data):
     '''Appends a given data sample to this time series.'''
-    self._data = np.append(self._data,
+    self._data = np.append(self.data,
                            np.asanyarray(data, dtype=self._data.dtype))
 
   def at(self, time):
