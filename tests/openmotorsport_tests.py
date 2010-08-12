@@ -65,6 +65,9 @@ class SessionTests(unittest.TestCase):
     original_doc.add_channel(
       Channel(
         id=0, name='Channel 1',
+        group='No Group',
+        description='This is a test channel',
+        units='kph',
         timeseries=UniformTimeSeries(
           frequency=Frequency.from_interval(1),
           data=self._getSampleData()
@@ -74,6 +77,7 @@ class SessionTests(unittest.TestCase):
     original_doc.add_channel(
       Channel(
         id=1, name='Channel 2',
+        group='No Group',
         timeseries=UniformTimeSeries(
           frequency=Frequency.from_interval(1),
           data=self._getSampleData()
@@ -409,7 +413,18 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(str(lap1), '100 ([])')
     self.assertEquals(str(lap2), '100 ([20, 30])')
 
-    
+  def test_context_management(self):
+    path = 'context.om'
+    session = Session()
+    session.metadata = self._getSampleMeta()
+    session.write(path)
+    self.assertTrue(os.path.exists(path))
+
+    with Session('context.om') as context_session:
+      self.assertEquals(len(context_session.channels), 0)
+      
+    os.remove(path)
+
   # /----------------------------------------------------------------------/    
   
   def _getSampleMeta(self):
@@ -425,7 +440,9 @@ class SessionTests(unittest.TestCase):
         'category': 'Formula One',
         'comments': None
       },
-      date = self._getSampleDate()
+      date = self._getSampleDate(),
+      comments = 'This is a test comment.',
+      datasource = 'python-openmotorsport'      
     )
   
   def _getSampleData(self):
