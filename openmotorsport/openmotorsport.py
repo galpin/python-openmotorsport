@@ -626,9 +626,6 @@ def SubElementFromDictConditional(parent, dict, key):
   the key exist and its value is not None.'''
   if dict.has_key(key) and dict[key] is not None:
     ET.SubElement(parent, key).text = dict[key]
-
-def seconds_to_milliseconds(seconds):
-  return seconds * 1000
   
 def to_iso8601_date(date):
   '''Gets an ISO-8601 string for a given date.'''
