@@ -1,0 +1,90 @@
+<html>
+<head>
+<title>openmotorsport.utils</title>
+</head>
+<body>
+openmotorsport.utils
+<style>
+.coverage pre {float: left; margin: 0px 1em; border: none;
+               padding: 0px; }
+.num pre { margin: 0px }
+.nocov, .nocov pre {background-color: #faa}
+.cov, .cov pre {background-color: #cfc}
+div.coverage div { clear: both; height: 1.1em}
+</style>
+<div class="stats">
+Covered: 37 lines<br/>
+Missed: 0 lines<br/>
+Skipped 28 lines<br/>
+Percent: 100 %<br/>
+
+</div>
+<div class="coverage">
+<div class="skip"><span class="num"><pre> 1</pre></span><pre>#!/usr/bin/python2.5</pre></div>
+<div class="skip"><span class="num"><pre> 2</pre></span><pre>#</pre></div>
+<div class="skip"><span class="num"><pre> 3</pre></span><pre># Utility functions for an OpenMotorsport sessions.</pre></div>
+<div class="skip"><span class="num"><pre> 4</pre></span><pre>#</pre></div>
+<div class="skip"><span class="num"><pre> 5</pre></span><pre># Author: Martin Galpin (m@66laps.com)</pre></div>
+<div class="skip"><span class="num"><pre> 6</pre></span><pre>#</pre></div>
+<div class="skip"><span class="num"><pre> 7</pre></span><pre># Copyright 2007 66laps Limited. All Rights Reserved.</pre></div>
+<div class="skip"><span class="num"><pre> 8</pre></span><pre>#</pre></div>
+<div class="skip"><span class="num"><pre> 9</pre></span><pre># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</pre></div>
+<div class="skip"><span class="num"><pre>10</pre></span><pre># you may not use this file except in compliance with the License.</pre></div>
+<div class="skip"><span class="num"><pre>11</pre></span><pre># You may obtain a copy of the License at</pre></div>
+<div class="skip"><span class="num"><pre>12</pre></span><pre>#</pre></div>
+<div class="skip"><span class="num"><pre>13</pre></span><pre>#     http://www.apache.org/licenses/LICENSE-2.0</pre></div>
+<div class="skip"><span class="num"><pre>14</pre></span><pre>#</pre></div>
+<div class="skip"><span class="num"><pre>15</pre></span><pre># Unless required by applicable law or agreed to in writing, software</pre></div>
+<div class="skip"><span class="num"><pre>16</pre></span><pre># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</pre></div>
+<div class="skip"><span class="num"><pre>17</pre></span><pre># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</pre></div>
+<div class="skip"><span class="num"><pre>18</pre></span><pre># See the License for the specific language governing permissions and</pre></div>
+<div class="skip"><span class="num"><pre>19</pre></span><pre># limitations under the License.</pre></div>
+<div class="skip"><span class="num"><pre>20</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>21</pre></span><pre>__author__  = 'Martin Galpin'</pre></div>
+<div class="cov"><span class="num"><pre>22</pre></span><pre>__contact__ = 'm@66laps.com'</pre></div>
+<div class="cov"><span class="num"><pre>23</pre></span><pre>__version__ = '1.0'</pre></div>
+<div class="cov"><span class="num"><pre>24</pre></span><pre>__license__ = 'Apache License, Version 2.0'</pre></div>
+<div class="skip"><span class="num"><pre>25</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>26</pre></span><pre>def lap_difference(session, lap):</pre></div>
+<div class="cov"><span class="num"><pre>27</pre></span><pre>  '''Gets the time difference between this lap and the previous lap.'''</pre></div>
+<div class="cov"><span class="num"><pre>28</pre></span><pre>  index = session.laps.index(lap)</pre></div>
+<div class="cov"><span class="num"><pre>29</pre></span><pre>  return None if not index else lap.length - session.laps[index - 1].length</pre></div>
+<div class="skip"><span class="num"><pre>30</pre></span><pre>  </pre></div>
+<div class="cov"><span class="num"><pre>31</pre></span><pre>def is_fastest_lap(session, lap):</pre></div>
+<div class="cov"><span class="num"><pre>32</pre></span><pre>  '''Returns True if the given lap is the fastest in the given session.'''</pre></div>
+<div class="cov"><span class="num"><pre>33</pre></span><pre>  return lap == fastest_lap(session)</pre></div>
+<div class="skip"><span class="num"><pre>34</pre></span><pre>  </pre></div>
+<div class="cov"><span class="num"><pre>35</pre></span><pre>def fastest_lap_time(session):</pre></div>
+<div class="cov"><span class="num"><pre>36</pre></span><pre>  '''Gets the fastest lap time in a given session.'''</pre></div>
+<div class="cov"><span class="num"><pre>37</pre></span><pre>  if not _has_at_least_one_lap(session): return None</pre></div>
+<div class="cov"><span class="num"><pre>38</pre></span><pre>  return min([lap.length for lap in session.laps if lap.length is not None])</pre></div>
+<div class="skip"><span class="num"><pre>39</pre></span><pre>  </pre></div>
+<div class="cov"><span class="num"><pre>40</pre></span><pre>def fastest_lap(session):</pre></div>
+<div class="cov"><span class="num"><pre>41</pre></span><pre>  '''Gets the fastest lap in a given session.'''</pre></div>
+<div class="cov"><span class="num"><pre>42</pre></span><pre>  if not _has_at_least_one_lap(session): return None</pre></div>
+<div class="cov"><span class="num"><pre>43</pre></span><pre>  f = lambda x, lap: lap.length == fastest_lap_time(session) and lap or x</pre></div>
+<div class="cov"><span class="num"><pre>44</pre></span><pre>  return reduce(f, session.laps)</pre></div>
+<div class="skip"><span class="num"><pre>45</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>46</pre></span><pre>def fastest_sector(session, sector):</pre></div>
+<div class="cov"><span class="num"><pre>47</pre></span><pre>  '''Returns True if time is the fastest sector in a given session.'''</pre></div>
+<div class="cov"><span class="num"><pre>48</pre></span><pre>  sector -= 1</pre></div>
+<div class="skip"><span class="num"><pre>49</pre></span><pre>  # make sure we at least have this number of sectors</pre></div>
+<div class="cov"><span class="num"><pre>50</pre></span><pre>  if len(session.markers) &lt;= sector: return None</pre></div>
+<div class="cov"><span class="num"><pre>51</pre></span><pre>  fastest = session.laps[0].sectors[sector]</pre></div>
+<div class="cov"><span class="num"><pre>52</pre></span><pre>  for lap in session.laps[1:]:</pre></div>
+<div class="cov"><span class="num"><pre>53</pre></span><pre>    if lap.sectors[sector] &lt; fastest: fastest = lap.sectors[sector]</pre></div>
+<div class="cov"><span class="num"><pre>54</pre></span><pre>  return fastest</pre></div>
+<div class="skip"><span class="num"><pre>55</pre></span><pre>  </pre></div>
+<div class="cov"><span class="num"><pre>56</pre></span><pre>def is_fastest_sector(session, sector, time):</pre></div>
+<div class="cov"><span class="num"><pre>57</pre></span><pre>  '''Returns True if a given time is the fastest for a given in a session.'''</pre></div>
+<div class="cov"><span class="num"><pre>58</pre></span><pre>  return time == fastest_sector(session, sector)</pre></div>
+<div class="skip"><span class="num"><pre>59</pre></span><pre>  </pre></div>
+<div class="cov"><span class="num"><pre>60</pre></span><pre>def _has_at_least_one_lap(session):</pre></div>
+<div class="cov"><span class="num"><pre>61</pre></span><pre>  '''Private method. </pre></div>
+<div class="cov"><span class="num"><pre>62</pre></span><pre>  Gets whether a session has no laps or if it has a lap, that the lap is </pre></div>
+<div class="cov"><span class="num"><pre>63</pre></span><pre>  complete (and that they didn't crash on their outlap - it happens!)</pre></div>
+<div class="cov"><span class="num"><pre>64</pre></span><pre>  '''</pre></div>
+<div class="cov"><span class="num"><pre>65</pre></span><pre>  return not(not session.laps or session.laps[0].length is None)</pre></div>
+</div>
+</body>
+</html>

@@ -18,7 +18,7 @@
 
 import unittest
 from datetime import datetime
-import os
+import os, tempfile, zipfile
 
 from openmotorsport.openmotorsport import Session, Channel, Metadata, Lap
 from openmotorsport.time import *
@@ -425,6 +425,16 @@ class SessionTests(unittest.TestCase):
       
     os.remove(path)
 
+  def test_import_errors(self):
+    path = tempfile.mkstemp()[1]
+    self.assertRaises(Exception, Session, path)
+
+    # no meta.xml
+    tempzip = zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED)
+    tempzip.writestr('this is a test', 'test')
+    tempzip.close()
+    self.assertRaises(Exception, Session, path)
+
   # /----------------------------------------------------------------------/    
   
   def _getSampleMeta(self):
@@ -499,7 +509,7 @@ class LapTests(unittest.TestCase):
     # test with no lap time but also no sectors
     lap = Lap(offset=0.0, length=None, sectors=[])
     self.assertEquals(lap.end_time, 0.0)
-      
+
 # utility functions
   
 def get_data(interval, duration):

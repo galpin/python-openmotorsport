@@ -24,13 +24,12 @@ __version__ = '1.0b'
 __license__ = 'Apache License, Version 2.0'
 
 import datetime
-import os
-import tempfile
-import zipfile
+import  os, sys, tempfile, zipfile
 import itertools
 import xml.etree.ElementTree as ET
 import numpy as np
-import utils
+
+from utils import *
 from time import *
 
 class Session(object):
@@ -237,10 +236,9 @@ class Session(object):
       self._parse_meta(root)
       self._parse_markers(root)      
       self._parse_channels(root)
-    except KeyError, e:
-      # TODO fix
-      raise Exception('meta.xml was not found.')
-      
+    except Exception, e:
+      raise Exception('Failed to import' + filepath, e), None, sys.exc_info()[2]
+
     # the zipfile is left open (for lazy loading of data)             
 
   def _parse_meta(self, root):
@@ -404,7 +402,7 @@ class Lap(Epoch):
   def difference(self):
     '''Gets the difference in time between this lap and its previous lap.'''
     if not self._difference and self.__parent__ is not None:
-      self._difference = utils.lap_difference(self.__parent__, self)
+      self._difference = lap_difference(self.__parent__, self)
     return self._difference
     
   def __repr__(self):
