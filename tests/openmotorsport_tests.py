@@ -324,17 +324,35 @@ class SessionTests(unittest.TestCase):
       Channel(id=6, name='Channel 5')
     ]
 
-    doc = Session()
-    [doc.add_channel(c) for c in channels]
+    session = Session()
+    [session.add_channel(c) for c in channels]
 
-    self.assertEquals(doc.get_channel('Channel 1'), channels[0])
-    self.assertEquals(doc.get_channel('Channel 2'), channels[1])
-    self.assertEquals(doc.get_channel('Channel 3'), None)
-    self.assertEquals(doc.get_channel('Channel 3', group='Group 1'), channels[2])
-    self.assertEquals(doc.get_channel('Channel 4', group='Group 2'), channels[3])
-    self.assertEquals(doc.get_channel('Channel 5', group='Group 1'), channels[4])    
-    self.assertEquals(doc.get_channel('Channel 5'), channels[5])
-    self.assertEquals(doc.get_group('Group 1'), [channels[2], channels[4]])
+    self.assertEquals(session.get_channel('Channel 1'), channels[0])
+    self.assertEquals(session.get_channel('Channel 2'), channels[1])
+    self.assertEquals(session.get_channel('Channel 3'), None)
+    self.assertEquals(session.get_channel('Channel 3', group='Group 1'), channels[2])
+    self.assertEquals(session.get_channel('Channel 4', group='Group 2'), channels[3])
+    self.assertEquals(session.get_channel('Channel 5', group='Group 1'), channels[4])
+    self.assertEquals(session.get_channel('Channel 5'), channels[5])
+    self.assertEquals(session.get_group('Group 1'), [channels[2], channels[4]])
+    self.assertEquals(session.get_group('Foo'), None)    
+
+  def test_get_channel_by_id(self):
+    channels = [
+      Channel(id=1, name='Channel 1'),
+      Channel(id=2, name='Channel 2'),
+      Channel(id=3, name='Channel 3', group='Group 1'),
+      Channel(id=4, name='Channel 4', group='Group 2')
+    ]
+
+    session = Session()
+    [session.add_channel(c) for c in channels]
+
+    self.assertEquals(session.get_channel_by_id(1), channels[0])
+    self.assertEquals(session.get_channel_by_id(2), channels[1])
+    self.assertEquals(session.get_channel_by_id(3), channels[2])
+    self.assertEquals(session.get_channel_by_id(4), channels[3])
+    self.assertEquals(session.get_channel_by_id(5), None)
 
   # /----------------------------------------------------------------------/    
   
