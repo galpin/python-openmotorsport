@@ -366,6 +366,9 @@ class Session(object):
     except:
       return False
 
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
 class Lap(Epoch):
   '''
   This class represents a single lap. It is a subclass of time.Epoch,
@@ -410,7 +413,11 @@ class Lap(Epoch):
   def __eq__(self, other):
     return other and \
       self.length == other.length and \
-      self.sectors == other.sectors
+      self.sectors == other.sectors and \
+      self.offset == other.offset
+
+  def __ne__(self, other):
+    return not self.__eq__(other)
       
 class Channel(object):
   '''This class represents a single channel within an OpenMotorsport file.'''
@@ -487,6 +494,9 @@ class Channel(object):
           self.group == other.group and \
           self.timeseries == other.timeseries
 
+  def __ne__(self, other):
+    return not self.__eq__(other)
+
 class Metadata(object):
   '''This class represents the metadata associated with an OpenMotorsport session.'''  
   def __init__(self, **kwargs):
@@ -545,7 +555,10 @@ class Metadata(object):
       self.venue == other.venue and \
       self.vehicle == other.vehicle and \
       self.date == other.date and \
-      self.comments == other.comments                  
+      self.comments == other.comments
+    
+  def __ne__(self, other):
+    return not self.__eq__(other)
 
 # /----------------------------------------------------------------------/
 

@@ -354,6 +354,41 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(session.get_channel_by_id(4), channels[3])
     self.assertEquals(session.get_channel_by_id(5), None)
 
+  def test_equals(self):
+    session1 = Session()
+    session2 = Session()
+    session2.add_channel(Channel(id=0, name='Test Channel'))
+    self.assertTrue(session1 == session1)
+    self.assertFalse(session1 == session2)
+    self.assertTrue(session1 != session2)
+    self.assertFalse(session1 == session2.get_channel_by_id(0))
+
+  def test_metadata_equals(self):
+    meta1 = Metadata()
+    meta2 = self._getSampleMeta()
+    self.assertTrue(meta1 == meta1)
+    self.assertTrue(meta2 == meta2)
+    self.assertFalse(meta1 == meta2)
+    self.assertTrue(meta1 != meta2)
+
+  def test_channel_equals(self):
+    channel1 = Channel(id=0, name='Test Channel 1',
+                       timeseries=VariableTimeSeries(data=[1], times=[1]))
+    channel2 = Channel(id=0, name='Test Channel 2',
+                       timeseries=VariableTimeSeries(data=[1], times=[1]))
+    self.assertTrue(channel1 == channel1)
+    self.assertFalse(channel1 == channel2)
+    self.assertTrue(channel1 != channel2)
+
+  def test_lap_equals(self):
+    lap1 = Lap(length=100, offset=10, sectors=[20, 50])
+    lap2 = Lap(length=100, offset=20, sectors=[20, 50])
+    lap3 = Lap(length=0)
+    self.assertTrue(lap1 == lap1)
+    self.assertTrue(lap1 != lap2)
+    self.assertTrue(lap2 != lap3)
+    self.assertTrue(lap3 != lap1)
+    
   # /----------------------------------------------------------------------/    
   
   def _getSampleMeta(self):
@@ -381,7 +416,7 @@ class SessionTests(unittest.TestCase):
     date = datetime.now()
     return datetime(date.year, date.month, date.day, date.hour, 
       date.minute, date.second)
-
+    
 class LapTests(unittest.TestCase):
   def test_end_time(self):
     # test basic
