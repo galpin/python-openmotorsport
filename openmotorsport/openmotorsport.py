@@ -44,22 +44,14 @@ class Session(object):
     Args:
       filepath
         The path to an existing OpenMotorsport session to load. [optional]
+
     '''    
-    self.metadata = Metadata()
-    '''An instance of openmotorsport.Metadata for this session.'''
-    
+    self.metadata = Metadata()    
     self._channels = {}
     self._groups = {}
     self._channels_ids = {}
-    
-    '''A list of openmotorsport.Channel instance for this session.'''
-    
-    self.markers = np.array([], dtype=np.float32)
-    '''A list of time offset markers for this session.'''
-    
+    self.markers = np.array([], dtype=np.int32)
     self.num_sectors = None
-    '''The number of sectors (recorded as markers) per lap.'''
-    
     self._laps = []
     
     if filepath:
