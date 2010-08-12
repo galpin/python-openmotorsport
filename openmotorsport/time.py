@@ -261,10 +261,17 @@ class UniformTimeSeries(object):
 
   def resample(self, frequency):
     if frequency == self.frequency or not np.size(self.data):
-      return self
+      data = self.data
     elif frequency.frequency > self.frequency.frequency:
-      return self._upsample(frequency)
-    return self._downsample(frequency)
+      data = self._upsample(frequency)
+    else:
+      data = self._downsample(frequency)
+
+    return UniformTimeSeries(
+      frequency=frequency,
+      data=data,
+      offset=self.offset
+    )
 
   def _downsample(self, frequency):
     factor = self.frequency.frequency / frequency.frequency
