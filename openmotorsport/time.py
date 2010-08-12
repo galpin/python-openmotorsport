@@ -24,6 +24,16 @@ from scipy import signal
 
 # Base time is currently milliseconds (sufficient for up to 1KHz)
 BASE_TIME = 1000
+# Base units are currently milliseconds
+BASE_UNITS = 'ms'
+# Conversion multipliers between millisecond and other units
+CONVERSION = {
+  's': 10**-3,
+  'ms': 1,
+  'us': 10**3,
+  'ns': 10**6,
+  'ps': 10**9
+}
 
 class Frequency(object):
   '''
@@ -278,4 +288,22 @@ class UniformTimeSeries(object):
     return False
     
   def __ne__(self, other):
-    return not self.__eq__(other)    
+    return not self.__eq__(other)
+
+def time(value, to):
+  '''
+  Converts a time in BASE_UNITS (currently milliseconds) and converts
+  to a given unit. To must be one of the following:
+
+  's': seconds
+  'ms': milliseconds
+  'us': microseconds
+  'ns': nanoseconds
+  'ps': picoseconds
+
+  For example:
+  
+  >>> time(12500, 's')
+  12.5
+  '''
+  return value * CONVERSION[to]

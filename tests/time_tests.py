@@ -213,5 +213,13 @@ class TimeSeriesTests(unittest.TestCase):
     self.assertEqual(ts.get(2), 3)
     self.assertRaises(IndexError, ts.get, 4)
 
+class TestConversion(unittest.TestCase):
+  def test_time(self):
+    self.assertEquals(time(1000, 's'), 1)
+    self.assertEquals(time(1000, 'ms'), 1000)
+    self.assertEquals(time(1000, 'us'), 1000000)
+    self.assertEquals(time(1000, 'ns'), 1000000000)
+    self.assertEquals(time(1000, 'ps'), 1000000000000)
+
 if __name__ == '__main__':
   unittest.main()
