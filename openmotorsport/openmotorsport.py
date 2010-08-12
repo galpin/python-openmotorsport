@@ -408,7 +408,7 @@ class Lap(Epoch):
     return self._difference
     
   def __repr__(self):
-    return '%.3f (%s)' % (self._length, self._sectors)
+    return '%d (%s)' % (self._length, self._sectors)
   
   def __eq__(self, other):
     return other and \

@@ -388,6 +388,27 @@ class SessionTests(unittest.TestCase):
     self.assertTrue(lap1 != lap2)
     self.assertTrue(lap2 != lap3)
     self.assertTrue(lap3 != lap1)
+
+  def test_string_representation(self):
+    meta = Metadata()
+    meta1 = self._getSampleMeta()
+    self.assertEquals(str(meta), 'None at None (%s)' % meta.date)
+    self.assertEquals(str(meta1),
+                      'Michael Schumacher at Silverstone (%s)' % meta1.date)
+
+    session = Session(metadata=self._getSampleMeta())
+    self.assertEquals(str(session), str(self._getSampleMeta()))
+
+    channel = Channel(id=0, name='Speed', group='Position')
+    channel1 = Channel(id=1)
+    self.assertEquals(str(channel), 'Channel Speed (Position)')
+    self.assertEquals(str(channel1), 'Channel None (None)')
+
+    lap1 = Lap(length=100)
+    lap2 = Lap(length=100, sectors=[20,30])
+    self.assertEquals(str(lap1), '100 ([])')
+    self.assertEquals(str(lap2), '100 ([20, 30])')
+
     
   # /----------------------------------------------------------------------/    
   
