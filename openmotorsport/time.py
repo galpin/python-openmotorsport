@@ -139,6 +139,16 @@ class VariableTimeSeries(object):
     '''Gets the end time of this time series (start time plus duration).'''
     return self.offset + self.duration
 
+  @property
+  def min(self):
+    '''Convienience property for getting the min data value.'''
+    return np.min(self.data)
+
+  @property
+  def max(self):
+    '''Convienience property for getting the mas data value.'''
+    return np.max(self.data)      
+
   def at(self, time):
     '''Gets a data sample at a given time using linear interpolation.'''
     f = interpolate.interp1d(self.times, self.data)  # TODO cache
@@ -233,6 +243,16 @@ class UniformTimeSeries(object):
     '''Gets the end time of this time series (start time plus duration).'''
     return self.offset + self.duration
 
+  @property
+  def min(self):
+    '''Convienience property for getting the min data value.'''
+    return np.min(self.data)
+
+  @property
+  def max(self):
+    '''Convienience property for getting the mas data value.'''
+    return np.max(self.data)     
+
   def append(self, data):
     '''Appends a given data sample to this time series.'''
     self._data = np.append(self.data,
@@ -263,9 +283,11 @@ class UniformTimeSeries(object):
     if frequency == self.frequency or not np.size(self.data):
       data = self.data
     elif frequency.frequency > self.frequency.frequency:
-      data = self._upsample(frequency)
+      factor = frequency.frequency / self.frequency.frequency
+      data = self.upsample(factor)
     else:
-      data = self._downsample(frequency)
+      factor = self.frequency.frequency / frequency.frequency
+      data = self.downsample(factor)
 
     return UniformTimeSeries(
       frequency=frequency,
@@ -273,12 +295,10 @@ class UniformTimeSeries(object):
       offset=self.offset
     )
 
-  def _downsample(self, frequency):
-    factor = self.frequency.frequency / frequency.frequency
+  def downsample(self, factor):
     return signal.decimate(self.data, factor)
 
-  def _upsample(self, frequency):
-    factor = frequency.frequency / self.frequency.frequency
+  def upsample(self, factor):
     # TODO find appropriate resampling method
     return signal.resample(self.data, factor * len(self))
 

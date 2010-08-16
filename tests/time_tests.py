@@ -130,6 +130,11 @@ class VariableTimeSeriesTests(unittest.TestCase):
     self.assertTrue(ts2 != ts1)
     self.assertFalse(ts2 == None)
 
+  def test_min_max(self):
+    ts1 = VariableTimeSeries([1,2,3,4], [1,2,3,4])
+    self.assertEqual(ts1.min, 1)
+    self.assertEqual(ts1.max, 4)
+
 class TimeSeriesTests(unittest.TestCase):
   def test_TimeSeries(self):
     ts = UniformTimeSeries(Frequency(5))
@@ -212,6 +217,11 @@ class TimeSeriesTests(unittest.TestCase):
     self.assertEqual(ts.get(1), 2)
     self.assertEqual(ts.get(2), 3)
     self.assertRaises(IndexError, ts.get, 4)
+
+  def test_min_max(self):
+    ts1 = UniformTimeSeries(Frequency(5), [10,20,30,40,50,60,70,80,90,100])
+    self.assertEqual(ts1.min, 10)
+    self.assertEqual(ts1.max, 100)
 
 class TestConversion(unittest.TestCase):
   def test_time(self):
