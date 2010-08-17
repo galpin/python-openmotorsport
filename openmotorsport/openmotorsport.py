@@ -49,7 +49,7 @@ class Session(object):
     self._channels = {}
     self._groups = {}
     self._channels_ids = {}
-    self.markers = np.array([], dtype=np.int32)
+    self.markers = np.array([], dtype=np.uint32)
     self.num_sectors = None
     self._laps = []
     
@@ -150,7 +150,7 @@ class Session(object):
 
   def _read_channel_times(self, channel_id):
     p = 'data/%s.tms' % channel_id
-    return np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.int32)  
+    return np.fromfile(self._zipfile.extract(p, self._tempdir), dtype=np.uint32)  
     
   def _write_meta(self):
     '''Generate the meta.xml file and return the contents as a string.'''

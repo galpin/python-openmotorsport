@@ -110,7 +110,7 @@ class VariableTimeSeries(object):
     Raises ValueError if data and times are not of equal length.
     '''
     self._data = np.array(data, dtype=np.float32)
-    self._times = np.array(times, dtype=np.int32)
+    self._times = np.array(times, dtype=np.uint32)
     self._offset = offset
       
     if np.size(self.data) != np.size(self.times):

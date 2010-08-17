@@ -50,7 +50,7 @@ class VariableTimeSeriesTests(unittest.TestCase):
     self.assertEquals(len(ts), 3)
     self.assertEquals(len(ts.times), 3)
     self.assertEquals(ts.data.dtype, np.float32)
-    self.assertEquals(ts.times.dtype, np.int32)
+    self.assertEquals(ts.times.dtype, np.uint32)
 
     self.assertRaises(ValueError, VariableTimeSeries, [1,2,3], [])
     self.assertRaises(ValueError, VariableTimeSeries, [], [1,2,3])
