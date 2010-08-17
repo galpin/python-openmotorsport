@@ -262,6 +262,9 @@ class SessionTests(unittest.TestCase):
     self.assertEquals(session.laps[1].length, 40.0)
     self.assertEquals(session.laps[1].offset, 30.0)
     self.assertEquals(session.laps[1].sectors, [20.0, 10.0])
+    self.assertEquals(session.laps[0].index, 0)
+    self.assertEquals(session.laps[1].index, 1)
+    self.assertEquals(session.laps[0].session, session)
 
     # test six laps, no sectors
     session = Session()

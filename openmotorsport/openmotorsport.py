@@ -82,6 +82,7 @@ class Session(object):
     
   def add_channel(self, channel):
     '''Adds a given instance of Channel to this session.'''
+    channel.__parent__ = self # a reference to this session   
     self._channels['%s/%s' % (channel.name, channel.group)] = channel
     self._channels_ids[str(channel.id)] = channel
     if not channel.group in self._groups:
@@ -382,6 +383,15 @@ class Lap(Epoch):
     self.__parent__ = None
 
   @property
+  def index(self):
+    return self.session.laps.index(self)
+
+  @property
+  def session(self):
+    '''Get the instance of Session that this lap belongs to'''
+    return self.__parent__
+
+  @property
   def end_time(self):
     '''Gets the time (in seconds that this lap ends).
     If this lap is incomplete then end_time will be equal to the time
@@ -451,6 +461,11 @@ class Channel(object):
     self._description = description
     self._timeseries = timeseries
     self.__parent__ = None
+
+  @property
+  def session(self):
+    '''Get the instance of Session that this lap belongs to'''
+    return self.__parent__
         
   @property 
   def name(self):
