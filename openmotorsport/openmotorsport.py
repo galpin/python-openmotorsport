@@ -95,6 +95,9 @@ class Session(object):
       return self._channels['%s/%s' % (name, group)]
     except KeyError:
       return None
+
+  def find_channel(self, name):
+    return [channel for channel in self._channels.values() if channel.name == name]
       
   def get_channel_by_id(self, id):
     '''Gets a channels that matches a given id.'''
@@ -496,6 +499,21 @@ class Channel(object):
   def timeseries(self):
     '''Gets the channel timeseries [read-only].'''
     return self._timeseries
+
+  @property
+  def min(self):
+    '''Gets the minimum value of this channel [read-only].'''
+    return np.min(self.timeseries.data)
+
+  @property
+  def max(self):
+    '''Gets the avemaximumrage value of this channel [read-only].'''
+    return np.max(self.timeseries.data)    
+
+  @property
+  def average(self):
+    '''Gets the average value of this channel [read-only].'''
+    return np.average(self.timeseries.data)
 
   def __repr__(self):
     return 'Channel %s (%s)' % (self.name, self.group)
