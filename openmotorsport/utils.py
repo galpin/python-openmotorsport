@@ -56,6 +56,48 @@ def fastest_sector(session, sector):
 def is_fastest_sector(session, sector, time):
   '''Returns True if a given time is the fastest for a given in a session.'''
   return time == fastest_sector(session, sector)
+
+def fastest_or_next_fastest_lap(lap):
+  '''
+  Gets the fastest lap for a given lap. If this already is the fastest lap,
+  get the next fastest lap instead. Finally, if there is no other lap, None
+  will be returned.
+  '''
+  the_fastest_lap = fastest_lap(lap.session)
+  if lap != the_fastest_lap: return the_fastest_lap
+  laps = [x for x in lap.session.laps if x.length >= lap.length and x != lap]
+  return laps[0] if laps else None
+
+def slowest_lap_time(session):
+  '''Gets the slowest lap time in a given session.'''
+  if not _has_at_least_one_lap(session): return None
+  return max([lap.length for lap in session.laps if lap.length is not None])
+
+def slowest_lap(session):
+  '''Gets the slowest Lap in a given session. Currently include outliners.'''
+  if not _has_at_least_one_lap(session): return None
+  f = lambda x, lap: lap.length == slowest_lap_time(session) and lap or x
+  return reduce(f, session.laps)
+
+def slowest_or_next_slowest_lap(lap):
+  '''
+  Gets the slowest Lap for a given session. If this is already the slowest Lap,
+  get the next slowest Lap instead. Finally, if there is no other Lap, None will
+  be returned.
+  '''
+  the_slowest_lap = slowest_lap(lap.session)
+  if lap != the_slowest_lap: return the_slowest_lap
+  laps = [x for x in lap.session.laps if x.length <= lap.length and x != lap]
+  return laps[0] if laps else None
+
+def next_lap(lap):
+  '''Get the next Lap sequentially. Returns None if this is the last lap.'''
+  return lap.session.laps[lap.index + 1] \
+    if lap.index < (len(lap.session.laps) - 1) else None
+
+def previous_lap(lap):
+  ''' Gets the previous Lap. Returns None if this is the first lap.'''
+  return lap.session.laps[lap.index - 1] if lap.index > 0 else None
   
 def _has_at_least_one_lap(session):
   '''Private method. 
