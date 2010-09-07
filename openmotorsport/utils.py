@@ -66,6 +66,7 @@ def fastest_or_next_fastest_lap(lap):
   the_fastest_lap = fastest_lap(lap.session)
   if lap != the_fastest_lap: return the_fastest_lap
   laps = [x for x in lap.session.laps if x.length >= lap.length and x != lap]
+  laps = sorted(laps, key=lambda lap: lap.length)
   return laps[0] if laps else None
 
 def slowest_lap_time(session):
@@ -88,6 +89,7 @@ def slowest_or_next_slowest_lap(lap):
   the_slowest_lap = slowest_lap(lap.session)
   if lap != the_slowest_lap: return the_slowest_lap
   laps = [x for x in lap.session.laps if x.length <= lap.length and x != lap]
+  laps = sorted(laps, key=lambda lap: lap.length, reverse=True)
   return laps[0] if laps else None
 
 def next_lap(lap):

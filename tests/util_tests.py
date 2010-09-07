@@ -37,12 +37,12 @@ class UtilsTests(unittest.TestCase):
   def testFastestLap(self):
     session = Session()
     session.num_sectors = 2
-    session.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
+    session.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0, 100.0, 110.0, 115.0]
     self.assertEquals(fastest_lap(session), session.laps[2])
     self.assertTrue(is_fastest_lap(session, session.laps[2]))
 
     # test the next fastest lap
-    self.assertEquals(fastest_or_next_fastest_lap(fastest_lap(session)), session.laps[0])
+    self.assertEquals(fastest_or_next_fastest_lap(fastest_lap(session)), session.laps[3])
     self.assertEquals(fastest_or_next_fastest_lap(session.laps[1]), fastest_lap(session))
     self.assertEquals(fastest_or_next_fastest_lap(session.laps[0]), fastest_lap(session))
 
@@ -62,7 +62,7 @@ class UtilsTests(unittest.TestCase):
   def testSlowestLap(self):
     session = Session()
     session.num_sectors = 2
-    session.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
+    session.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0, 100.0, 110.0, 115.0]
     self.assertEquals(fastest_lap(session), session.laps[2])
     self.assertTrue(is_fastest_lap(session, session.laps[2]))
 
@@ -70,7 +70,7 @@ class UtilsTests(unittest.TestCase):
     self.assertEquals(slowest_lap(session), session.laps[1])
 
     # test the next slowest lap
-    self.assertEquals(slowest_or_next_slowest_lap(slowest_lap(session)), session.laps[0])
+    self.assertEquals(slowest_or_next_slowest_lap(slowest_lap(session)), session.laps[3])
     self.assertEquals(slowest_or_next_slowest_lap(session.laps[1]), session.laps[0])
     self.assertEquals(slowest_or_next_slowest_lap(session.laps[2]), slowest_lap(session))
 
