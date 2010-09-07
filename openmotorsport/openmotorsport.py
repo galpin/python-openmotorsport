@@ -387,6 +387,7 @@ class Lap(Epoch):
 
   @property
   def index(self):
+    '''Gets the index of this lap relative to its parent session.'''
     return self.session.laps.index(self)
 
   @property
