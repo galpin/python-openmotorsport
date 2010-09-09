@@ -70,7 +70,7 @@ class UtilsTests(unittest.TestCase):
     self.assertEquals(slowest_lap(session), session.laps[1])
 
     # test the next slowest lap
-    self.assertEquals(slowest_or_next_slowest_lap(slowest_lap(session)), session.laps[3])
+    self.assertEquals(slowest_or_next_slowest_lap(slowest_lap(session)), session.laps[0])
     self.assertEquals(slowest_or_next_slowest_lap(session.laps[1]), session.laps[0])
     self.assertEquals(slowest_or_next_slowest_lap(session.laps[2]), slowest_lap(session))
 
