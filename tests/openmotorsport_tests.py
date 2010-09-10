@@ -61,7 +61,7 @@ class SessionTests(unittest.TestCase):
   def testWriteWithData(self):
     path = 'test_data.om'
     original_doc = Session()
-    original_doc.metadata = self._getSampleMeta()    
+    original_doc.metadata = self._getSampleMeta()
     original_doc.add_channel(
       Channel(
         id=0, name='Channel 1',
@@ -280,22 +280,20 @@ class SessionTests(unittest.TestCase):
     session = Session()
     session.num_sectors = 2
     [session.add_marker(m) for m in [10.0, 20.0, 30.0, 40.0]]
-    self.assertEquals(len(session.laps), 2)
+    self.assertEquals(len(session.laps), 1)
     self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
     self.assertEquals(session.laps[0].length, 30.0)
     self.assertEquals(session.laps[0].offset, 0.0)
-    self.assertEquals(session.laps[1].sectors, [10.0, None])
-    self.assertEquals(session.laps[1].length, None)
-    self.assertEquals(session.laps[1].offset, 30.0)
 
     # test one partially completed lap
     session = Session()
+    session.metadata.duration = 20
     session.num_sectors = 2
     [session.add_marker(m) for m in [10.0, 20.0]]
     self.assertEquals(len(session.laps), 1)
     self.assertEquals(session.laps[0].sectors, [10.0, 10.0])
-    self.assertEquals(session.laps[0].length, None)
-    self.assertEquals(session.laps[0].offset, 0.0)
+    self.assertEquals(session.laps[0].length, 20)
+    self.assertEquals(session.laps[0].offset, 0)
 
     # test just a single lap
     session = Session()
@@ -512,6 +510,67 @@ class LapTests(unittest.TestCase):
     # test with no lap time but also no sectors
     lap = Lap(offset=0.0, length=None, sectors=[])
     self.assertEquals(lap.end_time, 0.0)
+
+  def test_duration(self):
+    # test incomplete lap (with a duration specified)
+    session = Session()
+    session.metadata.duration = 55
+    session.num_sectors = 2
+    [session.add_marker(m) for m in [10, 20, 30, 40, 50]]
+
+    self.assertEqual(session.metadata.duration,  55)
+    self.assertEqual(len(session.laps), 2)
+    self.assertEqual(session.laps[-1].length, 25)
+    self.assertTrue(session.laps[-1].incomplete)
+
+    # test with markers but a duration that does not reach one
+    session = Session()
+    session.metadata.duration = 35
+    session.num_sectors = 2
+    [session.add_marker(m) for m in [10, 20, 30]]
+
+    self.assertEqual(len(session.laps), 2)
+    self.assertEqual(session.laps[-1].length, 5)
+    self.assertTrue(session.laps[-1].incomplete)
+    self.assertEqual(len(session.laps[0].sectors), len(session.laps[-1].sectors))
+
+    # test same session with no duration (the last lap should be omitted)
+    session.metadata.duration = None
+    session.refresh_laps()
+
+    self.assertEqual(len(session.laps), 1)
+
+    # test with no markers but an incomplete lap
+    session = Session()
+    session.metadata.duration = 55
+    session.num_sectors = 0
+    [session.add_marker(m) for m in [10, 20, 30, 40]]
+
+    self.assertEqual(len(session.laps), 5)
+    self.assertEqual(session.laps[-1].length, 15)
+    self.assertTrue(session.laps[-1].incomplete)
+
+    # test with no markers and no duration (last lap should be omitted)
+    session.metadata.duration = None
+    session.refresh_laps()
+
+    self.assertEqual(len(session.laps), 4)
+    self.assertFalse(session.laps[-1].incomplete)
+
+    # test with a duration but no markers at all
+    session = Session()
+    session.metadata.duration = 10
+    session.num_sectors = 0
+
+    self.assertEqual(len(session.laps), 1)
+    self.assertTrue(session.laps[-1].incomplete)
+    self.assertEqual(session.laps[-1].length, session.metadata.duration)
+
+    # now test with no duration
+    session.metadata.duration = None
+    session.refresh_laps()
+
+    self.assertEqual(len(session.laps), 0)
 
 # utility functions
   

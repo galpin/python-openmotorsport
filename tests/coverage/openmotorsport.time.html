@@ -13,9 +13,9 @@ openmotorsport.time
 div.coverage div { clear: both; height: 1.1em}
 </style>
 <div class="stats">
-Covered: 227 lines<br/>
+Covered: 249 lines<br/>
 Missed: 0 lines<br/>
-Skipped 83 lines<br/>
+Skipped 88 lines<br/>
 Percent: 100 %<br/>
 
 </div>
@@ -161,175 +161,202 @@ Percent: 100 %<br/>
 <div class="cov"><span class="num"><pre>139</pre></span><pre>    '''Gets the end time of this time series (start time plus duration).'''</pre></div>
 <div class="cov"><span class="num"><pre>140</pre></span><pre>    return self.offset + self.duration</pre></div>
 <div class="skip"><span class="num"><pre>141</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>142</pre></span><pre>  def at(self, time):</pre></div>
-<div class="cov"><span class="num"><pre>143</pre></span><pre>    '''Gets a data sample at a given time using linear interpolation.'''</pre></div>
-<div class="cov"><span class="num"><pre>144</pre></span><pre>    f = interpolate.interp1d(self.times, self.data)  # TODO cache</pre></div>
-<div class="cov"><span class="num"><pre>145</pre></span><pre>    return f(time)</pre></div>
+<div class="cov"><span class="num"><pre>142</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>143</pre></span><pre>  def min(self):</pre></div>
+<div class="cov"><span class="num"><pre>144</pre></span><pre>    '''Convienience property for getting the min data value.'''</pre></div>
+<div class="cov"><span class="num"><pre>145</pre></span><pre>    return np.min(self.data)</pre></div>
 <div class="skip"><span class="num"><pre>146</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>147</pre></span><pre>  def get(self, index):</pre></div>
-<div class="cov"><span class="num"><pre>148</pre></span><pre>    '''Gets a data sample at a given index.'''</pre></div>
-<div class="cov"><span class="num"><pre>149</pre></span><pre>    return self.data[index]</pre></div>
-<div class="skip"><span class="num"><pre>150</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>151</pre></span><pre>  def index_at(self, time):</pre></div>
-<div class="cov"><span class="num"><pre>152</pre></span><pre>    indices = np.where(self.times &gt;= time)[0]</pre></div>
-<div class="cov"><span class="num"><pre>153</pre></span><pre>    if not np.size(indices):</pre></div>
-<div class="cov"><span class="num"><pre>154</pre></span><pre>      raise ValueError('Time exceeds length of time series.')</pre></div>
-<div class="cov"><span class="num"><pre>155</pre></span><pre>    return indices[0]</pre></div>
+<div class="cov"><span class="num"><pre>147</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>148</pre></span><pre>  def max(self):</pre></div>
+<div class="cov"><span class="num"><pre>149</pre></span><pre>    '''Convienience property for getting the mas data value.'''</pre></div>
+<div class="cov"><span class="num"><pre>150</pre></span><pre>    return np.max(self.data)      </pre></div>
+<div class="skip"><span class="num"><pre>151</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>152</pre></span><pre>  def at(self, time):</pre></div>
+<div class="cov"><span class="num"><pre>153</pre></span><pre>    '''Gets a data sample at a given time using linear interpolation.'''</pre></div>
+<div class="cov"><span class="num"><pre>154</pre></span><pre>    f = interpolate.interp1d(self.times, self.data)  # TODO cache</pre></div>
+<div class="cov"><span class="num"><pre>155</pre></span><pre>    return f(time)</pre></div>
 <div class="skip"><span class="num"><pre>156</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>157</pre></span><pre>  def slice(self, epoch):</pre></div>
-<div class="cov"><span class="num"><pre>158</pre></span><pre>    '''</pre></div>
-<div class="cov"><span class="num"><pre>159</pre></span><pre>    Gets a new instance of VariableTimeSeries that contains only the data/times</pre></div>
-<div class="cov"><span class="num"><pre>160</pre></span><pre>    for a given epoch. This method currently does not implement interpolation</pre></div>
-<div class="cov"><span class="num"><pre>161</pre></span><pre>    and will only return actual actual data samples.</pre></div>
-<div class="cov"><span class="num"><pre>162</pre></span><pre>    '''</pre></div>
-<div class="cov"><span class="num"><pre>163</pre></span><pre>    start = self.index_at(epoch.offset)</pre></div>
-<div class="cov"><span class="num"><pre>164</pre></span><pre>    end = self.index_at(epoch.offset + epoch.length) + 1# inclusive</pre></div>
-<div class="skip"><span class="num"><pre>165</pre></span><pre>    </pre></div>
-<div class="cov"><span class="num"><pre>166</pre></span><pre>    return VariableTimeSeries(</pre></div>
-<div class="cov"><span class="num"><pre>167</pre></span><pre>      data=self.data[start:end],</pre></div>
-<div class="cov"><span class="num"><pre>168</pre></span><pre>      times=self.times[start:end],</pre></div>
-<div class="cov"><span class="num"><pre>169</pre></span><pre>      offset=epoch.offset</pre></div>
-<div class="cov"><span class="num"><pre>170</pre></span><pre>    )</pre></div>
-<div class="skip"><span class="num"><pre>171</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>172</pre></span><pre>  def append(self, data, time):</pre></div>
-<div class="cov"><span class="num"><pre>173</pre></span><pre>    '''</pre></div>
-<div class="cov"><span class="num"><pre>174</pre></span><pre>    Appends a value and times to this time series.</pre></div>
-<div class="skip"><span class="num"><pre>175</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>176</pre></span><pre>    Raises ValueError if value and time are not equal in length.    </pre></div>
-<div class="cov"><span class="num"><pre>177</pre></span><pre>    '''</pre></div>
-<div class="cov"><span class="num"><pre>178</pre></span><pre>    if np.size(data) != np.size(time):</pre></div>
-<div class="cov"><span class="num"><pre>179</pre></span><pre>      raise ValueError('Data/times mismatch. Lengths must be equal.')</pre></div>
-<div class="skip"><span class="num"><pre>180</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>181</pre></span><pre>    self._data = np.append(self.data,</pre></div>
-<div class="cov"><span class="num"><pre>182</pre></span><pre>                           np.asanyarray(data, dtype=self._data.dtype))</pre></div>
-<div class="cov"><span class="num"><pre>183</pre></span><pre>    self._times = np.append(self.times,</pre></div>
-<div class="cov"><span class="num"><pre>184</pre></span><pre>                            np.asanyarray(time, dtype=self._data.dtype))</pre></div>
+<div class="cov"><span class="num"><pre>157</pre></span><pre>  def get(self, index):</pre></div>
+<div class="cov"><span class="num"><pre>158</pre></span><pre>    '''Gets a data sample at a given index.'''</pre></div>
+<div class="cov"><span class="num"><pre>159</pre></span><pre>    return self.data[index]</pre></div>
+<div class="skip"><span class="num"><pre>160</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>161</pre></span><pre>  def index_at(self, time):</pre></div>
+<div class="cov"><span class="num"><pre>162</pre></span><pre>    indices = np.where(self.times &gt;= time)[0]</pre></div>
+<div class="cov"><span class="num"><pre>163</pre></span><pre>    if not np.size(indices):</pre></div>
+<div class="cov"><span class="num"><pre>164</pre></span><pre>      raise ValueError('Time exceeds length of time series.')</pre></div>
+<div class="cov"><span class="num"><pre>165</pre></span><pre>    return indices[0]</pre></div>
+<div class="skip"><span class="num"><pre>166</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>167</pre></span><pre>  def slice(self, epoch):</pre></div>
+<div class="cov"><span class="num"><pre>168</pre></span><pre>    '''</pre></div>
+<div class="cov"><span class="num"><pre>169</pre></span><pre>    Gets a new instance of VariableTimeSeries that contains only the data/times</pre></div>
+<div class="cov"><span class="num"><pre>170</pre></span><pre>    for a given epoch. This method currently does not implement interpolation</pre></div>
+<div class="cov"><span class="num"><pre>171</pre></span><pre>    and will only return actual actual data samples.</pre></div>
+<div class="cov"><span class="num"><pre>172</pre></span><pre>    '''</pre></div>
+<div class="cov"><span class="num"><pre>173</pre></span><pre>    start = self.index_at(epoch.offset)</pre></div>
+<div class="cov"><span class="num"><pre>174</pre></span><pre>    end = self.index_at(epoch.offset + epoch.length) + 1# inclusive</pre></div>
+<div class="skip"><span class="num"><pre>175</pre></span><pre>    </pre></div>
+<div class="cov"><span class="num"><pre>176</pre></span><pre>    return VariableTimeSeries(</pre></div>
+<div class="cov"><span class="num"><pre>177</pre></span><pre>      data=self.data[start:end],</pre></div>
+<div class="cov"><span class="num"><pre>178</pre></span><pre>      times=self.times[start:end],</pre></div>
+<div class="cov"><span class="num"><pre>179</pre></span><pre>      offset=epoch.offset</pre></div>
+<div class="cov"><span class="num"><pre>180</pre></span><pre>    )</pre></div>
+<div class="skip"><span class="num"><pre>181</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>182</pre></span><pre>  def append(self, data, time):</pre></div>
+<div class="cov"><span class="num"><pre>183</pre></span><pre>    '''</pre></div>
+<div class="cov"><span class="num"><pre>184</pre></span><pre>    Appends a value and times to this time series.</pre></div>
 <div class="skip"><span class="num"><pre>185</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>186</pre></span><pre>  def __len__(self):</pre></div>
-<div class="cov"><span class="num"><pre>187</pre></span><pre>    return np.size(self.data)</pre></div>
-<div class="skip"><span class="num"><pre>188</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>189</pre></span><pre>  def __eq__(self, other):</pre></div>
-<div class="cov"><span class="num"><pre>190</pre></span><pre>    if hasattr(other, 'data') and hasattr(other, 'times'):</pre></div>
-<div class="cov"><span class="num"><pre>191</pre></span><pre>      try:</pre></div>
-<div class="cov"><span class="num"><pre>192</pre></span><pre>        return np.equal(self.data, other.data).all() and \</pre></div>
-<div class="cov"><span class="num"><pre>193</pre></span><pre>          np.equal(self.times, other.times).all()</pre></div>
-<div class="cov"><span class="num"><pre>194</pre></span><pre>      except ValueError:</pre></div>
-<div class="cov"><span class="num"><pre>195</pre></span><pre>        return False</pre></div>
-<div class="cov"><span class="num"><pre>196</pre></span><pre>    return False</pre></div>
-<div class="skip"><span class="num"><pre>197</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>198</pre></span><pre>  def __ne__(self, other):</pre></div>
-<div class="cov"><span class="num"><pre>199</pre></span><pre>    return not self.__eq__(other)</pre></div>
-<div class="skip"><span class="num"><pre>200</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>201</pre></span><pre>class UniformTimeSeries(object):</pre></div>
-<div class="cov"><span class="num"><pre>202</pre></span><pre>  '''</pre></div>
-<div class="cov"><span class="num"><pre>203</pre></span><pre>  This class represents a time series with uniform data samples.</pre></div>
-<div class="cov"><span class="num"><pre>204</pre></span><pre>  '''</pre></div>
-<div class="cov"><span class="num"><pre>205</pre></span><pre>  def __init__(self, frequency, data=[], offset=0, **kwargs):</pre></div>
-<div class="cov"><span class="num"><pre>206</pre></span><pre>    self._frequency = frequency</pre></div>
-<div class="cov"><span class="num"><pre>207</pre></span><pre>    self._data = np.array(data, dtype=np.float32)</pre></div>
-<div class="cov"><span class="num"><pre>208</pre></span><pre>    self._offset = offset</pre></div>
-<div class="skip"><span class="num"><pre>209</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>210</pre></span><pre>  @property</pre></div>
-<div class="cov"><span class="num"><pre>211</pre></span><pre>  def frequency(self):</pre></div>
-<div class="cov"><span class="num"><pre>212</pre></span><pre>    return self._frequency</pre></div>
-<div class="skip"><span class="num"><pre>213</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>214</pre></span><pre>  @property</pre></div>
-<div class="cov"><span class="num"><pre>215</pre></span><pre>  def duration(self):</pre></div>
-<div class="cov"><span class="num"><pre>216</pre></span><pre>    return len(self) * self._frequency.interval</pre></div>
-<div class="skip"><span class="num"><pre>217</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>218</pre></span><pre>  @property</pre></div>
-<div class="cov"><span class="num"><pre>219</pre></span><pre>  def data(self):</pre></div>
-<div class="cov"><span class="num"><pre>220</pre></span><pre>    return self._data</pre></div>
-<div class="skip"><span class="num"><pre>221</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>222</pre></span><pre>  @property</pre></div>
-<div class="cov"><span class="num"><pre>223</pre></span><pre>  def offset(self):</pre></div>
-<div class="cov"><span class="num"><pre>224</pre></span><pre>    return self._offset</pre></div>
-<div class="skip"><span class="num"><pre>225</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>226</pre></span><pre>  @property</pre></div>
-<div class="cov"><span class="num"><pre>227</pre></span><pre>  def times(self):</pre></div>
-<div class="skip"><span class="num"><pre>228</pre></span><pre>    # TODO cache</pre></div>
-<div class="cov"><span class="num"><pre>229</pre></span><pre>    return np.arange(self.offset, self.end_time, self.frequency.interval)</pre></div>
-<div class="skip"><span class="num"><pre>230</pre></span><pre>    </pre></div>
-<div class="cov"><span class="num"><pre>231</pre></span><pre>  @property</pre></div>
-<div class="cov"><span class="num"><pre>232</pre></span><pre>  def end_time(self):</pre></div>
-<div class="cov"><span class="num"><pre>233</pre></span><pre>    '''Gets the end time of this time series (start time plus duration).'''</pre></div>
-<div class="cov"><span class="num"><pre>234</pre></span><pre>    return self.offset + self.duration</pre></div>
+<div class="cov"><span class="num"><pre>186</pre></span><pre>    Raises ValueError if value and time are not equal in length.    </pre></div>
+<div class="cov"><span class="num"><pre>187</pre></span><pre>    '''</pre></div>
+<div class="cov"><span class="num"><pre>188</pre></span><pre>    if np.size(data) != np.size(time):</pre></div>
+<div class="cov"><span class="num"><pre>189</pre></span><pre>      raise ValueError('Data/times mismatch. Lengths must be equal.')</pre></div>
+<div class="skip"><span class="num"><pre>190</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>191</pre></span><pre>    self._data = np.append(self.data,</pre></div>
+<div class="cov"><span class="num"><pre>192</pre></span><pre>                           np.asanyarray(data, dtype=self._data.dtype))</pre></div>
+<div class="cov"><span class="num"><pre>193</pre></span><pre>    self._times = np.append(self.times,</pre></div>
+<div class="cov"><span class="num"><pre>194</pre></span><pre>                            np.asanyarray(time, dtype=self._data.dtype))</pre></div>
+<div class="skip"><span class="num"><pre>195</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>196</pre></span><pre>  def __len__(self):</pre></div>
+<div class="cov"><span class="num"><pre>197</pre></span><pre>    return np.size(self.data)</pre></div>
+<div class="skip"><span class="num"><pre>198</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>199</pre></span><pre>  def __eq__(self, other):</pre></div>
+<div class="cov"><span class="num"><pre>200</pre></span><pre>    if hasattr(other, 'data') and hasattr(other, 'times'):</pre></div>
+<div class="cov"><span class="num"><pre>201</pre></span><pre>      try:</pre></div>
+<div class="cov"><span class="num"><pre>202</pre></span><pre>        return np.equal(self.data, other.data).all() and \</pre></div>
+<div class="cov"><span class="num"><pre>203</pre></span><pre>          np.equal(self.times, other.times).all()</pre></div>
+<div class="cov"><span class="num"><pre>204</pre></span><pre>      except ValueError:</pre></div>
+<div class="cov"><span class="num"><pre>205</pre></span><pre>        return False</pre></div>
+<div class="cov"><span class="num"><pre>206</pre></span><pre>    return False</pre></div>
+<div class="skip"><span class="num"><pre>207</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>208</pre></span><pre>  def __ne__(self, other):</pre></div>
+<div class="cov"><span class="num"><pre>209</pre></span><pre>    return not self.__eq__(other)</pre></div>
+<div class="skip"><span class="num"><pre>210</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>211</pre></span><pre>class UniformTimeSeries(object):</pre></div>
+<div class="cov"><span class="num"><pre>212</pre></span><pre>  '''</pre></div>
+<div class="cov"><span class="num"><pre>213</pre></span><pre>  This class represents a time series with uniform data samples.</pre></div>
+<div class="cov"><span class="num"><pre>214</pre></span><pre>  '''</pre></div>
+<div class="cov"><span class="num"><pre>215</pre></span><pre>  def __init__(self, frequency, data=[], offset=0, **kwargs):</pre></div>
+<div class="cov"><span class="num"><pre>216</pre></span><pre>    self._frequency = frequency</pre></div>
+<div class="cov"><span class="num"><pre>217</pre></span><pre>    self._data = np.array(data, dtype=np.float32)</pre></div>
+<div class="cov"><span class="num"><pre>218</pre></span><pre>    self._offset = offset</pre></div>
+<div class="skip"><span class="num"><pre>219</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>220</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>221</pre></span><pre>  def frequency(self):</pre></div>
+<div class="cov"><span class="num"><pre>222</pre></span><pre>    return self._frequency</pre></div>
+<div class="skip"><span class="num"><pre>223</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>224</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>225</pre></span><pre>  def duration(self):</pre></div>
+<div class="cov"><span class="num"><pre>226</pre></span><pre>    return len(self) * self._frequency.interval</pre></div>
+<div class="skip"><span class="num"><pre>227</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>228</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>229</pre></span><pre>  def data(self):</pre></div>
+<div class="cov"><span class="num"><pre>230</pre></span><pre>    return self._data</pre></div>
+<div class="skip"><span class="num"><pre>231</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>232</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>233</pre></span><pre>  def offset(self):</pre></div>
+<div class="cov"><span class="num"><pre>234</pre></span><pre>    return self._offset</pre></div>
 <div class="skip"><span class="num"><pre>235</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>236</pre></span><pre>  def append(self, data):</pre></div>
-<div class="cov"><span class="num"><pre>237</pre></span><pre>    '''Appends a given data sample to this time series.'''</pre></div>
-<div class="cov"><span class="num"><pre>238</pre></span><pre>    self._data = np.append(self.data,</pre></div>
-<div class="cov"><span class="num"><pre>239</pre></span><pre>                           np.asanyarray(data, dtype=self._data.dtype))</pre></div>
-<div class="skip"><span class="num"><pre>240</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>241</pre></span><pre>  def at(self, time):</pre></div>
-<div class="cov"><span class="num"><pre>242</pre></span><pre>    '''Gets a data sample at a given time using linear interpolation.'''    </pre></div>
-<div class="cov"><span class="num"><pre>243</pre></span><pre>    f = interpolate.interp1d(self.times, self.data)</pre></div>
-<div class="cov"><span class="num"><pre>244</pre></span><pre>    return f(time)</pre></div>
+<div class="cov"><span class="num"><pre>236</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>237</pre></span><pre>  def times(self):</pre></div>
+<div class="skip"><span class="num"><pre>238</pre></span><pre>    # TODO cache</pre></div>
+<div class="cov"><span class="num"><pre>239</pre></span><pre>    return np.arange(self.offset, self.end_time, self.frequency.interval)</pre></div>
+<div class="skip"><span class="num"><pre>240</pre></span><pre>    </pre></div>
+<div class="cov"><span class="num"><pre>241</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>242</pre></span><pre>  def end_time(self):</pre></div>
+<div class="cov"><span class="num"><pre>243</pre></span><pre>    '''Gets the end time of this time series (start time plus duration).'''</pre></div>
+<div class="cov"><span class="num"><pre>244</pre></span><pre>    return self.offset + self.duration</pre></div>
 <div class="skip"><span class="num"><pre>245</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>246</pre></span><pre>  def get(self, index):</pre></div>
-<div class="cov"><span class="num"><pre>247</pre></span><pre>    '''Gets a data sample at a given index.'''</pre></div>
-<div class="cov"><span class="num"><pre>248</pre></span><pre>    return self.data[index]    </pre></div>
-<div class="skip"><span class="num"><pre>249</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>250</pre></span><pre>  def slice(self, epoch):</pre></div>
-<div class="cov"><span class="num"><pre>251</pre></span><pre>    times = np.arange(self.offset, self.end_time, self.frequency.interval)</pre></div>
-<div class="cov"><span class="num"><pre>252</pre></span><pre>    f = interpolate.interp1d(times, self.data)</pre></div>
-<div class="cov"><span class="num"><pre>253</pre></span><pre>    epoch_times = np.arange(epoch.offset, epoch.offset + epoch.length,</pre></div>
-<div class="cov"><span class="num"><pre>254</pre></span><pre>                            self.frequency.interval)</pre></div>
-<div class="skip"><span class="num"><pre>255</pre></span><pre>    </pre></div>
-<div class="cov"><span class="num"><pre>256</pre></span><pre>    return UniformTimeSeries(</pre></div>
-<div class="cov"><span class="num"><pre>257</pre></span><pre>      frequency=self.frequency,</pre></div>
-<div class="cov"><span class="num"><pre>258</pre></span><pre>      data=f(epoch_times),</pre></div>
-<div class="cov"><span class="num"><pre>259</pre></span><pre>      offset=epoch.offset</pre></div>
-<div class="cov"><span class="num"><pre>260</pre></span><pre>    )</pre></div>
-<div class="skip"><span class="num"><pre>261</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>262</pre></span><pre>  def resample(self, frequency):</pre></div>
-<div class="cov"><span class="num"><pre>263</pre></span><pre>    if frequency == self.frequency or not np.size(self.data):</pre></div>
-<div class="cov"><span class="num"><pre>264</pre></span><pre>      return self</pre></div>
-<div class="cov"><span class="num"><pre>265</pre></span><pre>    elif frequency.frequency &gt; self.frequency.frequency:</pre></div>
-<div class="cov"><span class="num"><pre>266</pre></span><pre>      return self._upsample(frequency)</pre></div>
-<div class="cov"><span class="num"><pre>267</pre></span><pre>    return self._downsample(frequency)</pre></div>
-<div class="skip"><span class="num"><pre>268</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>269</pre></span><pre>  def _downsample(self, frequency):</pre></div>
-<div class="cov"><span class="num"><pre>270</pre></span><pre>    factor = self.frequency.frequency / frequency.frequency</pre></div>
-<div class="cov"><span class="num"><pre>271</pre></span><pre>    return signal.decimate(self.data, factor)</pre></div>
-<div class="skip"><span class="num"><pre>272</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>273</pre></span><pre>  def _upsample(self, frequency):</pre></div>
-<div class="cov"><span class="num"><pre>274</pre></span><pre>    factor = frequency.frequency / self.frequency.frequency</pre></div>
-<div class="skip"><span class="num"><pre>275</pre></span><pre>    # TODO find appropriate resampling method</pre></div>
-<div class="cov"><span class="num"><pre>276</pre></span><pre>    return signal.resample(self.data, factor * len(self))</pre></div>
-<div class="skip"><span class="num"><pre>277</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>278</pre></span><pre>  def __len__(self):</pre></div>
-<div class="cov"><span class="num"><pre>279</pre></span><pre>    return np.size(self.data)</pre></div>
-<div class="skip"><span class="num"><pre>280</pre></span><pre>    </pre></div>
-<div class="cov"><span class="num"><pre>281</pre></span><pre>  def __eq__(self, other):</pre></div>
-<div class="cov"><span class="num"><pre>282</pre></span><pre>    if hasattr(other, 'data') and hasattr(other, 'frequency'):</pre></div>
-<div class="cov"><span class="num"><pre>283</pre></span><pre>      try:</pre></div>
-<div class="cov"><span class="num"><pre>284</pre></span><pre>        return self.frequency == other.frequency and \</pre></div>
-<div class="cov"><span class="num"><pre>285</pre></span><pre>          np.equal(self.data, other.data).all()</pre></div>
-<div class="cov"><span class="num"><pre>286</pre></span><pre>      except ValueError:</pre></div>
-<div class="cov"><span class="num"><pre>287</pre></span><pre>        return False</pre></div>
-<div class="cov"><span class="num"><pre>288</pre></span><pre>    return False</pre></div>
-<div class="skip"><span class="num"><pre>289</pre></span><pre>    </pre></div>
-<div class="cov"><span class="num"><pre>290</pre></span><pre>  def __ne__(self, other):</pre></div>
-<div class="cov"><span class="num"><pre>291</pre></span><pre>    return not self.__eq__(other)</pre></div>
-<div class="skip"><span class="num"><pre>292</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>293</pre></span><pre>def time(value, to):</pre></div>
-<div class="cov"><span class="num"><pre>294</pre></span><pre>  '''</pre></div>
-<div class="cov"><span class="num"><pre>295</pre></span><pre>  Converts a time in BASE_UNITS (currently milliseconds) and converts</pre></div>
-<div class="cov"><span class="num"><pre>296</pre></span><pre>  to a given unit. To must be one of the following:</pre></div>
-<div class="skip"><span class="num"><pre>297</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>298</pre></span><pre>  's': seconds</pre></div>
-<div class="cov"><span class="num"><pre>299</pre></span><pre>  'ms': milliseconds</pre></div>
-<div class="cov"><span class="num"><pre>300</pre></span><pre>  'us': microseconds</pre></div>
-<div class="cov"><span class="num"><pre>301</pre></span><pre>  'ns': nanoseconds</pre></div>
-<div class="cov"><span class="num"><pre>302</pre></span><pre>  'ps': picoseconds</pre></div>
-<div class="skip"><span class="num"><pre>303</pre></span><pre></pre></div>
-<div class="cov"><span class="num"><pre>304</pre></span><pre>  For example:</pre></div>
-<div class="skip"><span class="num"><pre>305</pre></span><pre>  </pre></div>
-<div class="cov"><span class="num"><pre>306</pre></span><pre>  &gt;&gt;&gt; time(12500, 's')</pre></div>
-<div class="cov"><span class="num"><pre>307</pre></span><pre>  12.5</pre></div>
-<div class="cov"><span class="num"><pre>308</pre></span><pre>  '''</pre></div>
-<div class="cov"><span class="num"><pre>309</pre></span><pre>  return value * CONVERSION[to]</pre></div>
-<div class="skip"><span class="num"><pre>310</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>246</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>247</pre></span><pre>  def min(self):</pre></div>
+<div class="cov"><span class="num"><pre>248</pre></span><pre>    '''Convienience property for getting the min data value.'''</pre></div>
+<div class="cov"><span class="num"><pre>249</pre></span><pre>    return np.min(self.data)</pre></div>
+<div class="skip"><span class="num"><pre>250</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>251</pre></span><pre>  @property</pre></div>
+<div class="cov"><span class="num"><pre>252</pre></span><pre>  def max(self):</pre></div>
+<div class="cov"><span class="num"><pre>253</pre></span><pre>    '''Convienience property for getting the mas data value.'''</pre></div>
+<div class="cov"><span class="num"><pre>254</pre></span><pre>    return np.max(self.data)     </pre></div>
+<div class="skip"><span class="num"><pre>255</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>256</pre></span><pre>  def append(self, data):</pre></div>
+<div class="cov"><span class="num"><pre>257</pre></span><pre>    '''Appends a given data sample to this time series.'''</pre></div>
+<div class="cov"><span class="num"><pre>258</pre></span><pre>    self._data = np.append(self.data,</pre></div>
+<div class="cov"><span class="num"><pre>259</pre></span><pre>                           np.asanyarray(data, dtype=self._data.dtype))</pre></div>
+<div class="skip"><span class="num"><pre>260</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>261</pre></span><pre>  def at(self, time):</pre></div>
+<div class="cov"><span class="num"><pre>262</pre></span><pre>    '''Gets a data sample at a given time using linear interpolation.'''    </pre></div>
+<div class="cov"><span class="num"><pre>263</pre></span><pre>    f = interpolate.interp1d(self.times, self.data)</pre></div>
+<div class="cov"><span class="num"><pre>264</pre></span><pre>    return f(time)</pre></div>
+<div class="skip"><span class="num"><pre>265</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>266</pre></span><pre>  def get(self, index):</pre></div>
+<div class="cov"><span class="num"><pre>267</pre></span><pre>    '''Gets a data sample at a given index.'''</pre></div>
+<div class="cov"><span class="num"><pre>268</pre></span><pre>    return self.data[index]    </pre></div>
+<div class="skip"><span class="num"><pre>269</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>270</pre></span><pre>  def slice(self, epoch):</pre></div>
+<div class="cov"><span class="num"><pre>271</pre></span><pre>    times = np.arange(self.offset, self.end_time, self.frequency.interval)</pre></div>
+<div class="cov"><span class="num"><pre>272</pre></span><pre>    f = interpolate.interp1d(times, self.data)</pre></div>
+<div class="cov"><span class="num"><pre>273</pre></span><pre>    epoch_times = np.arange(epoch.offset, epoch.offset + epoch.length,</pre></div>
+<div class="cov"><span class="num"><pre>274</pre></span><pre>                            self.frequency.interval)</pre></div>
+<div class="skip"><span class="num"><pre>275</pre></span><pre>    </pre></div>
+<div class="cov"><span class="num"><pre>276</pre></span><pre>    return UniformTimeSeries(</pre></div>
+<div class="cov"><span class="num"><pre>277</pre></span><pre>      frequency=self.frequency,</pre></div>
+<div class="cov"><span class="num"><pre>278</pre></span><pre>      data=f(epoch_times),</pre></div>
+<div class="cov"><span class="num"><pre>279</pre></span><pre>      offset=epoch.offset</pre></div>
+<div class="cov"><span class="num"><pre>280</pre></span><pre>    )</pre></div>
+<div class="skip"><span class="num"><pre>281</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>282</pre></span><pre>  def resample(self, frequency):</pre></div>
+<div class="cov"><span class="num"><pre>283</pre></span><pre>    if frequency == self.frequency or not np.size(self.data):</pre></div>
+<div class="cov"><span class="num"><pre>284</pre></span><pre>      data = self.data</pre></div>
+<div class="cov"><span class="num"><pre>285</pre></span><pre>    elif frequency.frequency &gt; self.frequency.frequency:</pre></div>
+<div class="cov"><span class="num"><pre>286</pre></span><pre>      data = self._upsample(frequency)</pre></div>
+<div class="cov"><span class="num"><pre>287</pre></span><pre>    else:</pre></div>
+<div class="cov"><span class="num"><pre>288</pre></span><pre>      data = self._downsample(frequency)</pre></div>
+<div class="skip"><span class="num"><pre>289</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>290</pre></span><pre>    return UniformTimeSeries(</pre></div>
+<div class="cov"><span class="num"><pre>291</pre></span><pre>      frequency=frequency,</pre></div>
+<div class="cov"><span class="num"><pre>292</pre></span><pre>      data=data,</pre></div>
+<div class="cov"><span class="num"><pre>293</pre></span><pre>      offset=self.offset</pre></div>
+<div class="cov"><span class="num"><pre>294</pre></span><pre>    )</pre></div>
+<div class="skip"><span class="num"><pre>295</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>296</pre></span><pre>  def _downsample(self, frequency):</pre></div>
+<div class="cov"><span class="num"><pre>297</pre></span><pre>    factor = self.frequency.frequency / frequency.frequency</pre></div>
+<div class="cov"><span class="num"><pre>298</pre></span><pre>    return signal.decimate(self.data, factor)</pre></div>
+<div class="skip"><span class="num"><pre>299</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>300</pre></span><pre>  def _upsample(self, frequency):</pre></div>
+<div class="cov"><span class="num"><pre>301</pre></span><pre>    factor = frequency.frequency / self.frequency.frequency</pre></div>
+<div class="skip"><span class="num"><pre>302</pre></span><pre>    # TODO find appropriate resampling method</pre></div>
+<div class="cov"><span class="num"><pre>303</pre></span><pre>    return signal.resample(self.data, factor * len(self))</pre></div>
+<div class="skip"><span class="num"><pre>304</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>305</pre></span><pre>  def __len__(self):</pre></div>
+<div class="cov"><span class="num"><pre>306</pre></span><pre>    return np.size(self.data)</pre></div>
+<div class="skip"><span class="num"><pre>307</pre></span><pre>    </pre></div>
+<div class="cov"><span class="num"><pre>308</pre></span><pre>  def __eq__(self, other):</pre></div>
+<div class="cov"><span class="num"><pre>309</pre></span><pre>    if hasattr(other, 'data') and hasattr(other, 'frequency'):</pre></div>
+<div class="cov"><span class="num"><pre>310</pre></span><pre>      try:</pre></div>
+<div class="cov"><span class="num"><pre>311</pre></span><pre>        return self.frequency == other.frequency and \</pre></div>
+<div class="cov"><span class="num"><pre>312</pre></span><pre>          np.equal(self.data, other.data).all()</pre></div>
+<div class="cov"><span class="num"><pre>313</pre></span><pre>      except ValueError:</pre></div>
+<div class="cov"><span class="num"><pre>314</pre></span><pre>        return False</pre></div>
+<div class="cov"><span class="num"><pre>315</pre></span><pre>    return False</pre></div>
+<div class="skip"><span class="num"><pre>316</pre></span><pre>    </pre></div>
+<div class="cov"><span class="num"><pre>317</pre></span><pre>  def __ne__(self, other):</pre></div>
+<div class="cov"><span class="num"><pre>318</pre></span><pre>    return not self.__eq__(other)</pre></div>
+<div class="skip"><span class="num"><pre>319</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>320</pre></span><pre>def time(value, to):</pre></div>
+<div class="cov"><span class="num"><pre>321</pre></span><pre>  '''</pre></div>
+<div class="cov"><span class="num"><pre>322</pre></span><pre>  Converts a time in BASE_UNITS (currently milliseconds) and converts</pre></div>
+<div class="cov"><span class="num"><pre>323</pre></span><pre>  to a given unit. To must be one of the following:</pre></div>
+<div class="skip"><span class="num"><pre>324</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>325</pre></span><pre>  's': seconds</pre></div>
+<div class="cov"><span class="num"><pre>326</pre></span><pre>  'ms': milliseconds</pre></div>
+<div class="cov"><span class="num"><pre>327</pre></span><pre>  'us': microseconds</pre></div>
+<div class="cov"><span class="num"><pre>328</pre></span><pre>  'ns': nanoseconds</pre></div>
+<div class="cov"><span class="num"><pre>329</pre></span><pre>  'ps': picoseconds</pre></div>
+<div class="skip"><span class="num"><pre>330</pre></span><pre></pre></div>
+<div class="cov"><span class="num"><pre>331</pre></span><pre>  For example:</pre></div>
+<div class="skip"><span class="num"><pre>332</pre></span><pre>  </pre></div>
+<div class="cov"><span class="num"><pre>333</pre></span><pre>  &gt;&gt;&gt; time(12500, 's')</pre></div>
+<div class="cov"><span class="num"><pre>334</pre></span><pre>  12.5</pre></div>
+<div class="cov"><span class="num"><pre>335</pre></span><pre>  '''</pre></div>
+<div class="cov"><span class="num"><pre>336</pre></span><pre>  return value * CONVERSION[to]</pre></div>
+<div class="skip"><span class="num"><pre>337</pre></span><pre></pre></div>
 </div>
 </body>
 </html>

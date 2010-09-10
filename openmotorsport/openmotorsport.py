@@ -188,6 +188,10 @@ class Session(object):
     # datasource
     if self.metadata.datasource:
       ET.SubElement(meta, 'datasource').text = self.metadata.datasource
+
+    # duration
+    if self.metadata.duration:
+      ET.SubElement(meta, 'duration').text = str(self.metadata.duration)
     
     # channels and groups
     def write_channel(root, groups, channel):
@@ -274,7 +278,12 @@ class Session(object):
     self.metadata.comments = node.findtext(ns('comments'))
     
     # read datasource
-    self.metadata.datasource = node.findtext(ns('datasource'))    
+    self.metadata.datasource = node.findtext(ns('datasource'))
+
+    # read duration
+    duration = node.findtext(ns('duration'))
+    if duration:
+      self.metadata.duration = int(duration)
     
   def _parse_channels(self, root, group=None):
     '''Parses meta.xml/channels (and groups) from a given ElementTree root.'''
@@ -320,16 +329,27 @@ class Session(object):
     
         
   def refresh_laps(self): 
-    '''Calculates laps based on the sessions markers and number of sectors.
+    '''
+    Calculates laps based on the sessions markers and number of sectors.
+
+    When Session.num_sectors is None then it is considered that there is no laps
+    in the session (for example, on a rally).
+
+    If a Session.metadata.duration is given, then incomplete laps will be added
+    as an additional lap at the end of a session. If no duration is given then
+    incomplete laps (in laps, laps that were not complete [maybe crashed?]) will
+    be ignored.
     
     Returns:
       A list of Lap instances.
     '''
+
+    # TODO refactor this method
     def make_relative(time, laps): 
       return time if not laps else time - sum([lap.length for lap in laps])
 
     def make_start_time(laps):
-      return 0.0 if not laps else (laps[-1].offset + laps[-1].length)
+      return 0 if not laps else (laps[-1].offset + laps[-1].length)
     
     def make_relative_sector(time, sectors):
       return time if not sectors else time - sum(sectors) 
@@ -346,15 +366,52 @@ class Session(object):
       sectors = []
       for s in g[:-1]:
         sectors.append(make_relative_sector(make_relative(s, self._laps), sectors) if s else None)
-      
-      lap = Lap(
-        sectors = sectors,
-        length = make_relative(g[-1], self._laps) if g[-1] else None,
-        offset = make_start_time(self._laps)
-      )
-      lap.__parent__ = self
-      self._laps.append(lap) 
-      
+
+      if g[-1]:
+        lap = Lap(
+          sectors = sectors,
+          length = make_relative(g[-1], self._laps),
+          offset = make_start_time(self._laps)
+        )
+        lap.__parent__ = self
+        self._laps.append(lap)
+      else:
+        # if no duration is specified, we skip partially complete laps.
+        if self.metadata.duration:
+          lap = Lap(
+            sectors = sectors,
+            offset = make_start_time(self._laps),
+            length = self.metadata.duration - make_start_time(self._laps),
+            incomplete = True
+          )
+          lap.__parent__ = self
+          self._laps.append(lap)
+
+    if self.metadata.duration and self.metadata.duration > 0:
+      if self._laps and self._laps[-1].end_time < self.metadata.duration:
+        # we have a partially complete lap with no markers to indicate it
+        # so we will create a new lap with no markers and a duration of the
+        # remainder
+        lap = Lap(
+          offset = self._laps[-1].end_time,
+          length = self.metadata.duration - self._laps[-1].end_time,
+          sectors = [None for i in xrange(0, self.num_sectors)],
+          incomplete = True
+        )
+        lap.__parent__ = self
+        self._laps.append(lap)
+      elif not self._laps:
+        # there are no prior laps so this is an incomplete lap with no markers
+        lap = Lap(
+          offset = 0,
+          length = self.metadata.duration,
+          sectors = [None for i in xrange(0, self.num_sectors)],
+          incomplete = True
+        )
+        lap.__parent__ = self
+        self._laps.append(lap)
+
+
   def __repr__(self):
     return '%s' % self.metadata  
         
@@ -376,12 +433,13 @@ class Lap(Epoch):
   This class represents a single lap. It is a subclass of time.Epoch,
   adding a list of sector times and additional lap-specific methods.
   '''
-  def __init__(self, length, offset=0, sectors=[]):
+  def __init__(self, length, offset=0, sectors=[], incomplete=False):
     super(Epoch, self).__init__()
     self._length = length
     self._offset = offset
     self._sectors = sectors
 
+    self._incomplete = incomplete
     self._difference = None
     self.__parent__ = None
 
@@ -406,6 +464,11 @@ class Lap(Epoch):
       if not self.sectors:
         return self.offset
       return self.offset + self.sectors[-1]
+
+  @property
+  def incomplete(self):
+    '''Indicates that this lap is incomplete.'''
+    return self._incomplete
   
   @property
   def sectors(self):
@@ -575,6 +638,9 @@ class Metadata(object):
     
     self.datasource = None
     '''A description of the recording datasource (e.g. Pi System I). [optional]'''
+
+    self.duration = None
+    '''The total duration (in milliseconds) of this session [optional].'''
     
     self.__dict__.update(**kwargs)
     
