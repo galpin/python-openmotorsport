@@ -45,6 +45,7 @@ def fastest_lap(session):
 
 def fastest_sector(session, sector):
   '''Returns True if time is the fastest sector in a given session.'''
+  if not _has_at_least_one_lap(session): return None
   sector -= 1
   # make sure we at least have this number of sectors
   if len(session.markers) <= sector: return None
