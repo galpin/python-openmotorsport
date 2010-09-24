@@ -545,6 +545,11 @@ class Channel(object):
     return self._id
   
   @property
+  def identifier(self):
+    '''An alias to get the channel id [read-only].'''
+    return self._id
+  
+  @property
   def group(self):
     '''Gets the channel group [read-only].'''
     return self._group
