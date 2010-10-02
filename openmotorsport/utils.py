@@ -44,15 +44,27 @@ def fastest_lap(session):
   return reduce(f, session.laps)
 
 def fastest_sector(session, sector):
-  '''Returns True if time is the fastest sector in a given session.'''
+  '''
+  Returns the fastest time for a given sector in a given lap. `sector`
+  should be a index, starting at 0 for the first sector. If `sector`
+  is out of bounds or there is not at least one lap, this function
+  will return None.
+
+  For example:
+
+  >>> session = openmotorsport.Session()
+  >>> session.num_sectors = 2
+  >>> session.add_markers([10, 20, 30, 35, 39, 45])
+  >>> fastest_sector(session, 0)
+  5
+  >>> fastest_sector(session, 1)
+  4
+  >>> fastest_sector(session, 3)
+  None
+  '''
   if not _has_at_least_one_lap(session): return None
-  sector -= 1
-  # make sure we at least have this number of sectors
   if len(session.markers) <= sector: return None
-  fastest = session.laps[0].sectors[sector]
-  for lap in session.laps[1:]:
-    if lap.sectors[sector] < fastest: fastest = lap.sectors[sector]
-  return fastest
+  return min([lap.sectors[sector] for lap in session.laps])
 
 def is_fastest_sector(session, sector, time):
   '''Returns True if a given time is the fastest for a given in a session.'''

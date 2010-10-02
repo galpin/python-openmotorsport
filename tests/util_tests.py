@@ -95,45 +95,45 @@ class UtilsTests(unittest.TestCase):
     session = Session()
     session.num_sectors = 2
     session.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
+    self.assertEquals(fastest_sector(session, 0), 5.0)
     self.assertEquals(fastest_sector(session, 1), 5.0)
-    self.assertEquals(fastest_sector(session, 2), 5.0)
 
     # no markers at all
     session = Session()
     session.metadata.duration = 10
     session.num_sectors = 2
     session.markers = []
-    self.assertEquals(fastest_sector(session, 1), None)
+    self.assertEquals(fastest_sector(session, 0), None)
 
     # no complete laps
     session = Session()
     session.metadata.duration = 20
     session.num_sectors = 2
     session.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(session, 2), 10.0)
+    self.assertEquals(fastest_sector(session, 1), 10.0)
 
     # no complete laps and no duration
     session = Session()
     session.num_sectors = 2
     session.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(session, 2), None)
+    self.assertEquals(fastest_sector(session, 1), None)
 
   def testIsFastestSector(self):
     session = Session()
     session.num_sectors = 2
     session.markers = [10.0, 20.0, 30.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0]
+    self.assertTrue(is_fastest_sector(session, 0, 5.0))
     self.assertTrue(is_fastest_sector(session, 1, 5.0))
-    self.assertTrue(is_fastest_sector(session, 2, 5.0))
 
     # no markers at all
     session = Session()
     session.num_sectors = 2
     session.markers = []
-    self.assertEquals(fastest_sector(session, 1), None)
+    self.assertEquals(fastest_sector(session, 0), None)
 
     # no complete laps
     session = Session()
     session.metadata.duration = 10
     session.num_sectors = 2
     session.markers = [10.0, 20.0]
-    self.assertEquals(fastest_sector(session, 2), 10.0)
+    self.assertEquals(fastest_sector(session, 1), 10.0)
