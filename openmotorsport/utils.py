@@ -25,18 +25,18 @@ __license__ = 'Apache License, Version 2.0'
 
 def lap_difference(session, lap):
   '''Gets the time difference between this lap and the previous lap.'''
-  index = session.laps.index(lap)
+  index = lap.index
   return None if not index else lap.length - session.laps[index - 1].length
-  
+
 def is_fastest_lap(session, lap):
   '''Returns True if the given lap is the fastest in the given session.'''
   return lap == fastest_lap(session)
-  
+
 def fastest_lap_time(session):
   '''Gets the fastest lap time in a given session.'''
   if not _has_at_least_one_lap(session): return None
   return min([lap.length for lap in session.laps if lap.length is not None])
-  
+
 def fastest_lap(session):
   '''Gets the fastest lap in a given session.'''
   if not _has_at_least_one_lap(session): return None
@@ -53,7 +53,7 @@ def fastest_sector(session, sector):
   for lap in session.laps[1:]:
     if lap.sectors[sector] < fastest: fastest = lap.sectors[sector]
   return fastest
-  
+
 def is_fastest_sector(session, sector, time):
   '''Returns True if a given time is the fastest for a given in a session.'''
   return time == fastest_sector(session, sector)
@@ -101,10 +101,10 @@ def next_lap(lap):
 def previous_lap(lap):
   ''' Gets the previous Lap. Returns None if this is the first lap.'''
   return lap.session.laps[lap.index - 1] if lap.index > 0 else None
-  
+
 def _has_at_least_one_lap(session):
-  '''Private method. 
-  Gets whether a session has no laps or if it has a lap, that the lap is 
+  '''Private method.
+  Gets whether a session has no laps or if it has a lap, that the lap is
   complete (and that they didn't crash on their outlap - it happens!)
   '''
   return not(not session.laps or session.laps[0].length is None)
